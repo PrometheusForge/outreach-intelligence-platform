@@ -1,213 +1,421 @@
-let generatedEmails = [];
+// DATA STORE 
+// Keyed by email number. Avoids escaping content in onclick attributes.
+const _store = {};
 
-// Tabs
+// HTML ESCAPE 
+function esc(s) {
+  return (s || '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+
+// API KEY BADGE 
+function onApiKeyInput(val) {
+  const badge = document.getElementById('apiBadge');
+  badge.classList.toggle('on', val.length > 10);
+}
+
+// TEMPLATE PILLS 
+function pickTemplate(btn, key) {
+  document.querySelectorAll('.s-pill').forEach(p => p.classList.remove('selected'));
+  btn.classList.add('selected');
+  if (typeof applyTemplate === 'function') applyTemplate(key);
+}
+
+// TABS 
 function showTab(name, btn) {
   document.querySelectorAll('.tab-panel').forEach(p => p.classList.add('hidden'));
-  document.querySelectorAll('.tab-btn').forEach(b => {
-    b.classList.remove('active-tab');
-    b.classList.add('text-gray-500');
+  document.querySelectorAll('.s-tab').forEach(b => {
+    b.classList.remove('active');
+    b.setAttribute('aria-selected', 'false');
   });
-  document.getElementById(`tab${name.charAt(0).toUpperCase() + name.slice(1)}`).classList.remove('hidden');
-  if (btn) { btn.classList.add('active-tab'); btn.classList.remove('text-gray-500'); }
+  const panel = document.getElementById('tab' + name);
+  if (panel) panel.classList.remove('hidden');
+  if (btn) {
+    btn.classList.add('active');
+    btn.setAttribute('aria-selected', 'true');
+  }
 }
 
-// Email Card
-function renderEmailCard(data, step) {
-  generatedEmails[step.num - 1] = data;
-  const id   = `ecard${step.num}`;
-  const card = document.createElement('div');
-  card.id    = id;
-  card.className = 'email-card bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm';
-
-  card.innerHTML = `
-    <div class="px-4 py-3 bg-gray-50 border-b flex justify-between items-center cursor-pointer select-none"
-         onclick="toggleCard('${id}')">
-      <div>
-        <span class="text-xs font-semibold text-indigo-500 uppercase tracking-wide">
-          Email ${step.num} · Day ${step.day}
-        </span>
-        <p class="text-sm font-bold text-gray-800 mt-0.5">${step.angle}</p>
-      </div>
-      <div class="flex gap-3 items-center">
-        <button onclick="event.stopPropagation(); regenEmail(${step.num})"
-          class="text-xs text-gray-400 hover:text-indigo-600 transition">↺ Regen</button>
-        <span id="${id}arrow" class="text-gray-400">▾</span>
-      </div>
-    </div>
-
-    <div id="${id}body" class="p-4 space-y-3">
-
-      <!-- Subject -->
-      <div class="bg-indigo-50 rounded-lg p-3">
-        <div class="flex justify-between mb-1">
-          <span class="text-xs font-bold text-indigo-600 uppercase">Subject Line</span>
-          <button class="text-xs text-indigo-500 hover:underline copy-btn">Copy</button>
-        </div>
-        <p class="text-sm font-semibold text-gray-800 subject-val">${esc(data.subject)}</p>
-        <p class="text-xs text-gray-400 mt-1">Preview: ${esc(data.previewText)}</p>
-      </div>
-
-      <!-- Body -->
-      <div>
-        <div class="flex justify-between mb-1">
-          <span class="text-xs font-bold text-gray-500 uppercase">Body</span>
-          <button class="text-xs text-indigo-500 hover:underline copy-btn">Copy</button>
-        </div>
-        <p class="text-sm text-gray-700 whitespace-pre-line leading-relaxed body-val">${esc(data.body)}</p>
-      </div>
-
-      <!-- CTA -->
-      <div class="bg-green-50 rounded-lg p-3 flex justify-between items-start gap-2">
-        <div>
-          <p class="text-xs font-bold text-green-700 uppercase mb-0.5">CTA</p>
-          <p class="text-sm text-gray-800 cta-val">${esc(data.cta)}</p>
-        </div>
-        <button class="text-xs text-green-600 hover:underline flex-shrink-0 copy-btn">Copy</button>
-      </div>
-
-      <!-- Send time -->
-      <p class="text-xs text-gray-400">📅 ${esc(data.bestSendTime)}</p>
-
-      <!-- A/B Variants -->
-      <details class="text-sm">
-        <summary class="text-xs font-bold text-gray-500 uppercase cursor-pointer hover:text-indigo-600">A/B Subject Variants ▸</summary>
-        <div class="mt-2 space-y-1">
-          ${[data.variantA, data.variantB, data.variantC].map(v => `
-            <div class="flex justify-between bg-gray-50 rounded px-3 py-1.5">
-              <span class="text-xs text-gray-700">${esc(v)}</span>
-              <button class="text-xs text-indigo-500 ml-2 copy-btn">Copy</button>
-            </div>`).join('')}
-        </div>
-      </details>
-
-      <!-- Why It Works -->
-      <details>
-        <summary class="text-xs font-bold text-gray-500 uppercase cursor-pointer hover:text-indigo-600">Why It Works ▸</summary>
-        <p class="text-xs text-gray-500 italic mt-2 leading-relaxed">${esc(data.whyItWorks)}</p>
-      </details>
-    </div>`;
-
-  // Wire up copy buttons by proximity to the value element
-  const copyBtns = card.querySelectorAll('.copy-btn');
-  const vals     = card.querySelectorAll('.subject-val, .body-val, .cta-val');
-  copyBtns[0].onclick = () => copyText(data.subject);
-  copyBtns[1].onclick = () => copyText(data.body);
-  copyBtns[2].onclick = () => copyText(data.cta);
-  copyBtns[3].onclick = () => copyText(data.variantA);
-  copyBtns[4].onclick = () => copyText(data.variantB);
-  copyBtns[5].onclick = () => copyText(data.variantC);
-
-  const acc = document.getElementById('emailAccordion');
-  const old = document.getElementById(id);
-  old ? acc.replaceChild(card, old) : acc.appendChild(card);
+// PROGRESS DOTS 
+function buildProgressDots() {
+  const seqLen = parseInt(document.getElementById('fieldLength').value) || 5;
+  const total  = seqLen + 2; // emails + linkedin + objections
+  const wrap   = document.getElementById('progressDots');
+  wrap.innerHTML = '';
+  for (let i = 0; i < total; i++) {
+    const d = document.createElement('span');
+    d.className = 's-dot';
+    d.id = 'sdot' + i;
+    wrap.appendChild(d);
+  }
 }
 
-// Linkedin Render
-function renderLinkedInOutput(d) {
-  document.getElementById('linkedinOutput').innerHTML = [
-    { label: '🤝 Connection Request',   key: 'connectionRequest' },
-    { label: '💬 Follow-Up DM 1 (Day 2)', key: 'dm1' },
-    { label: '📩 Follow-Up DM 2 (Day 7)', key: 'dm2' },
-    { label: '📞 Cold Voicemail Script', key: 'voicemail' },
-  ].map(s => `
-    <div class="bg-white border rounded-xl p-4">
-      <div class="flex justify-between items-center mb-2">
-        <span class="text-sm font-semibold text-gray-700">${s.label}</span>
-        <button onclick="copyText(this.dataset.val)" data-val="${esc(d[s.key])}"
-          class="text-xs text-indigo-500 hover:underline">Copy</button>
-      </div>
-      <p class="text-sm text-gray-600 whitespace-pre-line">${esc(d[s.key])}</p>
-    </div>`).join('')
-  + `<details class="bg-gray-50 rounded-xl p-4 border">
-      <summary class="text-xs font-bold text-gray-500 uppercase cursor-pointer">Why This Works ▸</summary>
-      <p class="text-xs text-gray-500 italic mt-2">${esc(d.whyItWorks)}</p>
-     </details>`;
-}
+function updateProgress(label, pct) {
+  const labelEl = document.getElementById('progressLabel');
+  if (labelEl) labelEl.textContent = label;
 
-// Objection Render
-function renderObjectionOutput(d) {
-  document.getElementById('objectionsOutput').innerHTML =
-    d.objections.map((o, i) => `
-      <div class="bg-white border rounded-xl p-4 space-y-2">
-        <p class="text-xs font-bold text-red-500 uppercase">Objection ${i + 1}</p>
-        <p class="text-sm font-semibold text-gray-800">${esc(o.label)}</p>
-        <div class="bg-green-50 rounded-lg p-3">
-          <p class="text-xs font-bold text-green-700 mb-1">Your Response</p>
-          <p class="text-sm text-gray-700">${esc(o.response)}</p>
-          <button onclick="copyText(this.dataset.val)" data-val="${esc(o.response)}"
-            class="text-xs text-green-600 hover:underline mt-1">Copy</button>
-        </div>
-        <div class="bg-yellow-50 rounded-lg p-3">
-          <p class="text-xs font-bold text-yellow-700 mb-1">Bridge Question</p>
-          <p class="text-sm text-gray-700">${esc(o.bridge)}</p>
-        </div>
-      </div>`).join('')
-    + `<div class="bg-gray-50 border rounded-xl p-4">
-        <p class="text-xs font-bold text-gray-600 uppercase mb-2">The Philosophy</p>
-        <p class="text-xs text-gray-500 italic">${esc(d.philosophy)}</p>
-       </div>`;
-}
+  const dots  = document.querySelectorAll('.s-dot');
+  const total = dots.length;
+  if (!total) return;
 
-// Export all generated content in a structured text format for easy pasting into docs or email tools
-function exportAll() {
-  if (!generatedEmails.length) { alert('Generate a sequence first.'); return; }
-  let out = `OUTREACH INTELLIGENCE EXPORT\nGenerated: ${new Date().toLocaleDateString()}\n${'═'.repeat(50)}\n\n`;
-  generatedEmails.forEach(e => {
-    if (!e) return;
-    out += `EMAIL ${e.step.num} — DAY ${e.step.day}: ${e.step.angle}\n${'-'.repeat(40)}\n`;
-    out += `SUBJECT: ${e.subject}\nPREVIEW: ${e.previewText}\n\n${e.body}\n\nCTA: ${e.cta}\n`;
-    out += `SEND: ${e.bestSendTime}\n\nA/B VARIANTS:\n  A: ${e.variantA}\n  B: ${e.variantB}\n  C: ${e.variantC}\n\n`;
+  const done = pct >= 100 ? total : Math.floor((pct / 100) * total);
+  dots.forEach((d, i) => {
+    d.className = 's-dot'
+      + (i < done ? ' done' : (i === done && pct < 100) ? ' pulse' : '');
   });
-  navigator.clipboard.writeText(out).then(() => toast('✅ Copied! Paste into Google Docs, Notion, or your email tool.'));
 }
 
-// Utilities
-function copyText(text) { navigator.clipboard.writeText(text || '').then(() => toast('✅ Copied!')); }
+// GENERATE STATE 
+function setGenerating(on) {
+  const btn  = document.getElementById('generateBtn');
+  const prog = document.getElementById('progressContainer');
 
-function toast(msg) {
-  const el = Object.assign(document.createElement('div'), {
-    className: 'fixed bottom-5 right-5 bg-gray-800 text-white text-xs px-4 py-2 rounded-lg shadow-lg z-50 transition-opacity',
-    textContent: msg
-  });
-  document.body.appendChild(el);
-  setTimeout(() => el.remove(), 2000);
+  btn.disabled    = on;
+  btn.textContent = on ? '⏳ Generating…' : '⚡ Generate Full Outreach Suite';
+
+  if (on) {
+    buildProgressDots();
+    prog.classList.add('on');
+  } else {
+    prog.classList.remove('on');
+  }
 }
 
-function toggleCard(id) {
-  const body  = document.getElementById(`${id}body`);
-  const arrow = document.getElementById(`${id}arrow`);
-  body.classList.toggle('hidden');
-  arrow.textContent = body.classList.contains('hidden') ? '▸' : '▾';
-}
-
-// Sanitize strings before injecting into innerHTML
-function esc(str) {
-  return (str || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-}
-
+// CLEAR & SHOW 
 function clearOutputs() {
-  ['emailAccordion','linkedinOutput','objectionsOutput'].forEach(id =>
-    document.getElementById(id).innerHTML = '');
-  generatedEmails = [];
+  ['emailTimeline', 'linkedinOutput', 'objectionsOutput']
+    .forEach(id => { const el = document.getElementById(id); if (el) el.innerHTML = ''; });
+  Object.keys(_store).forEach(k => delete _store[k]);
 }
 
 function showOutputSection() {
-  document.getElementById('outputSection').classList.remove('hidden');
-  showTab('emails', document.querySelector('.tab-btn'));
+  const out = document.getElementById('outputSection');
+  if (out) out.classList.remove('hidden');
+  showTab('Emails', document.querySelector('.s-tab'));
 }
 
 function showError(msg) {
-  document.getElementById('emailAccordion').innerHTML =
-    `<div class="bg-red-50 border border-red-200 rounded-xl p-4 text-sm text-red-700">${esc(msg)}</div>`;
+  const tl = document.getElementById('emailTimeline');
+  if (tl) tl.innerHTML = `<div class="s-error">${esc(msg)}</div>`;
 }
 
 function showEmailLoading(num) {
-  const card = document.getElementById(`ecard${num}`);
-  if (card) card.querySelector(`#ecard${num}body`).innerHTML =
-    `<p class="text-sm text-gray-400 animate-pulse p-4">Regenerating…</p>`;
+  const body = document.getElementById('ebody' + num);
+  if (body && body.classList.contains('open')) {
+    const inner = body.querySelector('.s-ecard-inner');
+    if (inner) inner.innerHTML =
+      '<p style="font-family:var(--f-mono);font-size:11px;color:var(--text-lo);padding:4px 0">Regenerating…</p>';
+  }
 }
 
+// EMAIL CARD 
+function renderEmailCard(data, step) {
+  _store[step.num] = data;
+
+  // Build the entry node without any inline event handlers
+  const entry = document.createElement('div');
+  entry.className = 's-entry';
+
+  entry.innerHTML = `
+    <div class="s-entry-rail" aria-hidden="true">
+      <div class="s-rail-dot"></div>
+      <span class="s-rail-day">D${step.day}</span>
+    </div>
+
+    <div class="s-ecard" id="ec${step.num}">
+
+      <!--  Header (toggle)  -->
+      <div class="s-ecard-head" role="button"
+           aria-expanded="false" aria-controls="ebody${step.num}"
+           id="ehead${step.num}">
+        <span class="s-ecard-num">E${step.num}</span>
+        <div class="s-ecard-meta">
+          <div class="s-ecard-angle">${esc(step.angle)}</div>
+          <div class="s-ecard-subj" title="${esc(data.subject)}">${esc(data.subject)}</div>
+        </div>
+        <div class="s-ecard-acts">
+          <button class="s-btn-regen" title="Regenerate this email" aria-label="Regenerate email ${step.num}">↺</button>
+          <span class="s-caret" id="caret${step.num}" aria-hidden="true">▾</span>
+        </div>
+      </div>
+
+      <!--  Body (collapsible)  -->
+      <div class="s-ecard-body" id="ebody${step.num}" role="region" aria-labelledby="ehead${step.num}">
+        <div class="s-ecard-inner">
+
+          <!-- Subject -->
+          <div class="s-block-row">
+            <div class="s-block">
+              <span class="s-block-key">Subject</span>
+              <div class="s-block-val subj">${esc(data.subject)}</div>
+              <div class="s-block-val preview">Preview: ${esc(data.previewText)}</div>
+            </div>
+            <button class="s-btn-copy" data-field="subject" aria-label="Copy subject line">copy</button>
+          </div>
+
+          <!-- Body -->
+          <div class="s-block-row">
+            <div class="s-block" style="flex:1;min-width:0">
+              <span class="s-block-key">Body</span>
+              <div class="s-block-val body-copy">${esc(data.body)}</div>
+            </div>
+            <button class="s-btn-copy" data-field="body" aria-label="Copy email body">copy</button>
+          </div>
+
+          <!-- CTA -->
+          <div class="s-cta">
+            <div class="s-cta-inner">
+              <div class="s-cta-lbl">Call to Action</div>
+              <div class="s-cta-text">${esc(data.cta)}</div>
+            </div>
+            <button class="s-btn-copy" data-field="cta" aria-label="Copy call to action">copy</button>
+          </div>
+
+          <!-- Send time -->
+          <div class="s-send-time">📅 ${esc(data.bestSendTime)}</div>
+
+          <!-- A/B Variants (expandable) -->
+          <div class="s-expand-wrap">
+            <button class="s-expand-hd" id="abhd${step.num}" aria-expanded="false"
+                    aria-controls="ab${step.num}">
+              <span class="arr" aria-hidden="true">▶</span> A/B Subject Variants
+            </button>
+            <div class="s-expand-body" id="ab${step.num}" role="region">
+              <div class="s-ab-row">
+                <span class="s-ab-ltr">A</span>
+                <span class="s-ab-txt">${esc(data.variantA)}</span>
+                <button class="s-btn-copy" data-field="variantA" aria-label="Copy variant A">copy</button>
+              </div>
+              <div class="s-ab-row">
+                <span class="s-ab-ltr">B</span>
+                <span class="s-ab-txt">${esc(data.variantB)}</span>
+                <button class="s-btn-copy" data-field="variantB" aria-label="Copy variant B">copy</button>
+              </div>
+              <div class="s-ab-row">
+                <span class="s-ab-ltr">C</span>
+                <span class="s-ab-txt">${esc(data.variantC)}</span>
+                <button class="s-btn-copy" data-field="variantC" aria-label="Copy variant C">copy</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Why It Works (expandable) -->
+          <div class="s-expand-wrap">
+            <button class="s-expand-hd" id="whyhd${step.num}" aria-expanded="false"
+                    aria-controls="why${step.num}">
+              <span class="arr" aria-hidden="true">▶</span> Why It Works
+            </button>
+            <div class="s-expand-body" id="why${step.num}" role="region">
+              <div class="s-why">${esc(data.whyItWorks)}</div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>`;
+
+  // Wire interactions via closures (safe — no escaping needed) 
+
+  // Header toggle
+  const head = entry.querySelector('.s-ecard-head');
+  head.addEventListener('click', () => _toggleCard(step.num));
+
+  // Regen button
+  const regenBtn = entry.querySelector('.s-btn-regen');
+  regenBtn.addEventListener('click', e => { e.stopPropagation(); regenEmail(step.num); });
+
+  // Copy buttons — look up value from _store at click time
+  entry.querySelectorAll('[data-field]').forEach(btn => {
+    const field = btn.dataset.field;
+    btn.addEventListener('click', e => {
+      e.stopPropagation();
+      copyText(_store[step.num]?.[field] || '', btn);
+    });
+  });
+
+  // Expand toggles
+  entry.querySelector('#abhd' + step.num).addEventListener('click', () =>
+    _toggleExpand('ab' + step.num, 'abhd' + step.num));
+  entry.querySelector('#whyhd' + step.num).addEventListener('click', () =>
+    _toggleExpand('why' + step.num, 'whyhd' + step.num));
+
+  // Append or replace
+  const tl  = document.getElementById('emailTimeline');
+  const old = document.getElementById('ec' + step.num);
+  if (old) {
+    const oldEntry = old.closest('.s-entry');
+    oldEntry ? tl.replaceChild(entry, oldEntry) : tl.appendChild(entry);
+  } else {
+    tl.appendChild(entry);
+  }
+
+  // Auto-open first card
+  if (step.num === 1) _toggleCard(1);
+}
+
+function _toggleCard(num) {
+  const body  = document.getElementById('ebody' + num);
+  const caret = document.getElementById('caret' + num);
+  const head  = document.getElementById('ehead' + num);
+  if (!body) return;
+  const isOpen = body.classList.toggle('open');
+  if (caret) caret.classList.toggle('open', isOpen);
+  if (head)  head.setAttribute('aria-expanded', isOpen);
+}
+
+function _toggleExpand(contentId, btnId) {
+  const body = document.getElementById(contentId);
+  const btn  = document.getElementById(btnId);
+  if (!body || !btn) return;
+  const isOpen = body.classList.toggle('open');
+  btn.classList.toggle('open', isOpen);
+  btn.setAttribute('aria-expanded', isOpen);
+}
+
+// LINKEDIN RENDER 
+function renderLinkedInOutput(d) {
+  const container = document.getElementById('linkedinOutput');
+  if (!container) return;
+
+  const sections = [
+    { title: '🤝 Connection Request',        key: 'connectionRequest', delay: '0.04s' },
+    { title: '💬 Follow-Up DM 1 — Day 2',   key: 'dm1',               delay: '0.12s' },
+    { title: '📩 Follow-Up DM 2 — Day 7',   key: 'dm2',               delay: '0.20s' },
+    { title: '📞 Voicemail Script',          key: 'voicemail',         delay: '0.28s' },
+  ];
+
+  // Build cards
+  container.innerHTML = sections.map(s => `
+    <div class="s-li-card" style="animation-delay:${s.delay}">
+      <div class="s-li-head">
+        <span class="s-li-title">${s.title}</span>
+      </div>
+      <div class="s-li-body">${esc(d[s.key])}</div>
+    </div>
+  `).join('');
+
+  if (d.whyItWorks) {
+    container.innerHTML += `
+      <div class="s-li-card" style="animation-delay:0.36s">
+        <div class="s-li-head">
+          <span class="s-li-title" style="font-style:italic;color:var(--text-mid)">Why This Sequence Works</span>
+        </div>
+        <div class="s-li-body" style="font-style:italic">${esc(d.whyItWorks)}</div>
+      </div>`;
+  }
+
+  // Wire copy buttons after rendering (values from d object via closure)
+  const cards = container.querySelectorAll('.s-li-card');
+  sections.forEach((s, i) => {
+    if (!cards[i]) return;
+    const val     = d[s.key] || '';
+    const copyBtn = document.createElement('button');
+    copyBtn.className    = 's-btn-copy';
+    copyBtn.textContent  = 'copy';
+    copyBtn.setAttribute('aria-label', 'Copy ' + s.title);
+    copyBtn.addEventListener('click', () => copyText(val, copyBtn));
+    cards[i].querySelector('.s-li-head').appendChild(copyBtn);
+  });
+}
+
+// OBJECTION BANK RENDER 
+function renderObjectionOutput(d) {
+  const container = document.getElementById('objectionsOutput');
+  if (!container) return;
+
+  container.innerHTML = d.objections.map((o, i) => `
+    <div class="s-obj-card" style="animation-delay:${(i * 0.08).toFixed(2)}s">
+      <span class="s-obj-n">Objection ${i + 1}</span>
+      <div class="s-obj-lbl">${esc(o.label)}</div>
+      <div class="s-obj-resp">
+        <span class="s-obj-resp-key">Your Response</span>
+        <p class="s-obj-resp-val">${esc(o.response)}</p>
+      </div>
+      <div class="s-obj-bridge">
+        <div class="s-obj-bridge-key">Bridge Question</div>
+        <div class="s-obj-bridge-val">${esc(o.bridge)}</div>
+      </div>
+    </div>
+  `).join('');
+
+  if (d.philosophy) {
+    container.innerHTML += `
+      <div class="s-philosophy">
+        <div class="s-philosophy-key">The Philosophy</div>
+        <p class="s-philosophy-val">${esc(d.philosophy)}</p>
+      </div>`;
+  }
+
+  // Wire copy buttons on response blocks
+  const cards = container.querySelectorAll('.s-obj-card');
+  d.objections.forEach((o, i) => {
+    const card = cards[i];
+    if (!card) return;
+    const resp    = card.querySelector('.s-obj-resp');
+    const copyBtn = document.createElement('button');
+    copyBtn.className   = 's-btn-copy';
+    copyBtn.textContent = 'copy response';
+    copyBtn.style.marginTop   = '6px';
+    copyBtn.style.alignSelf   = 'flex-start';
+    copyBtn.setAttribute('aria-label', 'Copy response to objection ' + (i + 1));
+    const respText = o.response;
+    copyBtn.addEventListener('click', () => copyText(respText, copyBtn));
+    resp.appendChild(copyBtn);
+  });
+}
+
+// EXPORT ALL 
+function exportAll() {
+  const emails = Object.values(_store).filter(Boolean);
+  if (!emails.length) { alert('Generate a sequence first.'); return; }
+
+  let out = `SIGNAL — OUTREACH SUITE EXPORT\nGenerated: ${new Date().toLocaleDateString()}\n${''.repeat(52)}\n\n`;
+
+  emails.forEach(e => {
+    if (!e?.step) return;
+    out += `EMAIL ${e.step.num}  ·  DAY ${e.step.day}  ·  ${e.step.angle}\n${''.repeat(44)}\n`;
+    out += `SUBJECT: ${e.subject}\nPREVIEW: ${e.previewText}\n\n`;
+    out += `${e.body}\n\nCTA: ${e.cta}\nSEND: ${e.bestSendTime}\n\n`;
+    out += `A/B VARIANTS:\n  A: ${e.variantA}\n  B: ${e.variantB}\n  C: ${e.variantC}\n\n`;
+  });
+
+  copyText(out);
+}
+
+// COPY UTILITY 
+function copyText(text, btn) {
+  navigator.clipboard.writeText(text || '')
+    .then(() => {
+      if (btn) {
+        const prev = btn.textContent;
+        btn.textContent = '✓ done';
+        btn.classList.add('ok');
+        setTimeout(() => {
+          btn.textContent = prev;
+          btn.classList.remove('ok');
+        }, 1800);
+      } else {
+        _toast('✓ Copied to clipboard');
+      }
+    })
+    .catch(() => _toast('Copy failed — please select manually'));
+}
+
+function _toast(msg) {
+  const el      = document.createElement('div');
+  el.className  = 's-toast';
+  el.textContent = msg;
+  el.setAttribute('role', 'status');
+  el.setAttribute('aria-live', 'polite');
+  document.body.appendChild(el);
+  setTimeout(() => el.remove(), 2400);
+}
+
+// REGEN BRIDGE 
 function regenEmail(num) {
-  const config = getFormValues();
-  if (config) regenerateEmail(num, config);
+  const config = typeof getFormValues === 'function' ? getFormValues() : null;
+  if (config && typeof regenerateEmail === 'function') regenerateEmail(num, config);
 }
