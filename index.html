@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en" class="bg-gray-50">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Outreach Intelligence Platform</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body class="min-h-screen text-gray-800">
+
+  <!--  HEADER  -->
+  <header class="bg-white border-b border-gray-200 px-6 py-4 sticky top-0 z-40">
+    <div class="max-w-5xl mx-auto flex items-center justify-between flex-wrap gap-3">
+      <div>
+        <h1 class="text-xl font-bold text-indigo-700">⚡ Outreach Intelligence</h1>
+        <p class="text-xs text-gray-400">Cold emails · LinkedIn · Objection bank — all generated, zero cost</p>
+      </div>
+      <div class="flex items-center gap-2">
+        <input id="apiKeyInput" type="password" placeholder="Paste your free Gemini API key"
+          class="border rounded-lg px-3 py-2 text-sm w-60 focus:ring-2 focus:ring-indigo-300 outline-none" />
+        <a href="https://aistudio.google.com" target="_blank"
+          class="text-xs text-indigo-500 hover:underline whitespace-nowrap">Get free key ↗</a>
+      </div>
+    </div>
+  </header>
+
+  <!--  MAIN GRID  -->
+  <main class="max-w-5xl mx-auto px-6 py-8 grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
+
+    <!-- LEFT COLUMN: FORM -->
+    <section>
+      <h2 class="text-base font-semibold text-gray-700 mb-4">Campaign Brief</h2>
+
+      <!-- Quick Start Templates -->
+      <div class="mb-4">
+        <label class="block text-xs font-medium text-gray-500 mb-1 uppercase tracking-wide">Quick Start Template</label>
+        <select id="icpTemplate" class="w-full border rounded-lg px-3 py-2 text-sm bg-white"
+          onchange="applyTemplate(this.value)">
+          <option value="">— Select preset or fill manually below —</option>
+          <option value="saas_revops">SaaS tool → RevOps Managers</option>
+          <option value="agency_ecomm">Marketing agency → E-commerce founders</option>
+          <option value="consulting_cfo">Finance consulting → CFOs at Series B+</option>
+          <option value="hr_tech">HR tech → People Ops (50–200 person companies)</option>
+          <option value="accounting_freelance">Accounting software → Freelance designers</option>
+          <option value="cybersecurity_midmarket">Cybersecurity → IT Directors (mid-market)</option>
+          <option value="logistics_saas">Logistics SaaS → Operations Managers</option>
+          <option value="legaltech">Legal tech → Solo practice attorneys</option>
+        </select>
+      </div>
+
+      <!-- Form Fields -->
+      <div class="space-y-4">
+        <div>
+          <label class="block text-xs font-medium text-gray-500 mb-1 uppercase tracking-wide">Product / Service *</label>
+          <textarea id="fieldProduct" rows="2"
+            placeholder='e.g. "Accounting software for freelancers that automates invoicing and quarterly tax estimates"'
+            class="w-full border rounded-lg px-3 py-2 text-sm resize-none focus:ring-2 focus:ring-indigo-300 outline-none"></textarea>
+        </div>
+
+        <div>
+          <label class="block text-xs font-medium text-gray-500 mb-1 uppercase tracking-wide">Ideal Customer Profile (ICP) *</label>
+          <textarea id="fieldIcp" rows="2"
+            placeholder='e.g. "Solo graphic designers, 25–40, US-based, earning $50–150k, currently using spreadsheets"'
+            class="w-full border rounded-lg px-3 py-2 text-sm resize-none focus:ring-2 focus:ring-indigo-300 outline-none"></textarea>
+        </div>
+
+        <div>
+          <label class="block text-xs font-medium text-gray-500 mb-1 uppercase tracking-wide">Campaign Goal *</label>
+          <input id="fieldGoal" type="text" placeholder='e.g. "Book a 15-minute demo call"'
+            class="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-300 outline-none" />
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-medium text-gray-500 mb-1 uppercase tracking-wide">Sequence Length</label>
+            <select id="fieldLength" class="w-full border rounded-lg px-3 py-2 text-sm bg-white">
+              <option value="3">3 emails</option>
+              <option value="4">4 emails</option>
+              <option value="5" selected>5 emails</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-gray-500 mb-1 uppercase tracking-wide">Tone</label>
+            <select id="fieldTone" class="w-full border rounded-lg px-3 py-2 text-sm bg-white">
+              <option value="Conversational and direct">Conversational & direct</option>
+              <option value="Formal and professional">Formal & professional</option>
+              <option value="Casual and friendly">Casual & friendly</option>
+              <option value="Data-driven and analytical">Data-driven</option>
+              <option value="Provocative and bold">Provocative & bold</option>
+            </select>
+          </div>
+        </div>
+
+        <button id="generateBtn" onclick="generateAll()"
+          class="w-full bg-indigo-600 text-white rounded-lg py-3 font-semibold text-sm
+                 hover:bg-indigo-700 active:scale-95 transition-all disabled:opacity-50">
+          ⚡ Generate Full Outreach Suite
+        </button>
+
+        <!-- Progress -->
+        <div id="progressContainer" class="hidden">
+          <p class="text-xs text-gray-500 mb-1" id="progressLabel">Starting...</p>
+          <div class="w-full bg-gray-200 rounded-full h-1.5">
+            <div id="progressBar" class="bg-indigo-500 h-1.5 rounded-full transition-all duration-500" style="width:0%"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- RIGHT COLUMN: OUTPUT -->
+    <section id="outputSection" class="hidden">
+      <!-- Tabs -->
+      <div class="flex border-b mb-4 gap-1">
+        <button class="tab-btn active-tab px-4 py-2 text-sm font-medium rounded-t" onclick="showTab('emails', this)">📧 Emails</button>
+        <button class="tab-btn px-4 py-2 text-sm font-medium text-gray-500 rounded-t" onclick="showTab('linkedin', this)">💼 LinkedIn</button>
+        <button class="tab-btn px-4 py-2 text-sm font-medium text-gray-500 rounded-t" onclick="showTab('objections', this)">🛡️ Objections</button>
+      </div>
+
+      <div id="tabEmails" class="tab-panel space-y-3">
+        <div id="emailAccordion"></div>
+        <button onclick="exportAll()"
+          class="w-full border border-indigo-400 text-indigo-600 rounded-lg py-2 text-sm font-medium hover:bg-indigo-50 transition mt-2">
+          📋 Copy All as Plain Text
+        </button>
+      </div>
+
+      <div id="tabLinkedin" class="tab-panel hidden space-y-4">
+        <div id="linkedinOutput"></div>
+      </div>
+
+      <div id="tabObjections" class="tab-panel hidden space-y-4">
+        <div id="objectionsOutput"></div>
+      </div>
+    </section>
+  </main>
+
+  <script src="prompts.js"></script>
+  <script src="api.js"></script>
+  <script src="parser.js"></script>
+  <script src="ui.js"></script>
+</body>
+</html>
