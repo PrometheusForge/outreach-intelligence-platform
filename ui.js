@@ -396,3 +396,28 @@ function regenEmail(num) {
   const config = typeof getFormValues === 'function' ? getFormValues() : null;
   if (config && typeof regenerateEmail === 'function') regenerateEmail(num, config);
 }
+
+// REPLY ANALYZER RENDER
+function renderReplyOutput(data) {
+  const container = document.getElementById('replyOutputContainer');
+  if (!container) return;
+  
+  document.getElementById('outReplyCategory').textContent = `[ ${data.reply_category.toUpperCase()} ]`;
+  
+  const badge = document.getElementById('outReplyTempBadge');
+  badge.textContent = data.temperature.toUpperCase();
+  
+  // Apply thermal coloring based on temperature
+  const temp = data.temperature.toLowerCase();
+  if (temp === 'hot') badge.style.backgroundColor = '#4ade80'; // Green
+  else if (temp === 'warm') badge.style.backgroundColor = '#facc15'; // Yellow
+  else if (temp === 'cold') badge.style.backgroundColor = '#9ca3af'; // Gray
+  else badge.style.backgroundColor = '#6b7280'; // Darker gray for frozen
+  
+  document.getElementById('outReplyReasoning').textContent = data.temperature_reason;
+  document.getElementById('outReplyRecommended').value = data.recommended_response;
+  document.getElementById('outReplyNextAction').textContent = data.next_action_plan;
+  document.getElementById('outReplyCoaching').textContent = data.coaching_note;
+  
+  container.classList.remove('hidden');
+}
