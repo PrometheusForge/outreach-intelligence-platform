@@ -9,13 +9,11 @@ function esc(s) {
     .replace(/"/g, '&quot;');
 }
 
-// API KEY BADGE 
 function onApiKeyInput(val) {
   const badge = document.getElementById('apiBadge');
   badge.classList.toggle('on', val.length > 10);
 }
 
-// TEMPLATE PILLS 
 function pickTemplate(btn, key) {
   document.querySelectorAll('.s-pill').forEach(p => p.classList.remove('selected'));
   btn.classList.add('selected');
@@ -37,7 +35,7 @@ function showTab(name, btn) {
   }
 }
 
-// PROGRESS DOTS 
+// Progress dots
 function buildProgressDots() {
   const seqLen = parseInt(document.getElementById('fieldLength').value) || 5;
   const total  = seqLen + 2; 
@@ -66,7 +64,7 @@ function updateProgress(label, pct) {
   });
 }
 
-// GENERATE STATE 
+// State 
 function setGenerating(on) {
   const btn  = document.getElementById('generateBtn');
   const prog = document.getElementById('progressContainer');
@@ -82,7 +80,7 @@ function setGenerating(on) {
   }
 }
 
-// CLEAR & SHOW 
+// clear & show
 function clearOutputs() {
   ['emailTimeline', 'linkedinOutput', 'objectionsOutput']
     .forEach(id => { const el = document.getElementById(id); if (el) el.innerHTML = ''; });
@@ -109,7 +107,7 @@ function showEmailLoading(num) {
   }
 }
 
-// EMAIL CARD 
+// Email card
 function renderEmailCard(data, step) {
   _store[step.num] = data;
 
@@ -255,7 +253,7 @@ function _toggleExpand(contentId, btnId) {
   btn.setAttribute('aria-expanded', isOpen);
 }
 
-// LINKEDIN RENDER 
+// Linkedin render
 function renderLinkedInOutput(d) {
   const container = document.getElementById('linkedinOutput');
   if (!container) return;
@@ -299,7 +297,7 @@ function renderLinkedInOutput(d) {
   });
 }
 
-// OBJECTION BANK RENDER 
+// Objection render
 function renderObjectionOutput(d) {
   const container = document.getElementById('objectionsOutput');
   if (!container) return;
@@ -344,7 +342,7 @@ function renderObjectionOutput(d) {
   });
 }
 
-// EXPORT ALL 
+// Export all
 function exportAll() {
   const emails = Object.values(_store).filter(Boolean);
   if (!emails.length) { alert('Generate sequence first.'); return; }
@@ -362,7 +360,7 @@ function exportAll() {
   copyText(out);
 }
 
-// COPY UTILITY 
+// Copy utility
 function copyText(text, btn) {
   navigator.clipboard.writeText(text || '')
     .then(() => {
@@ -391,13 +389,13 @@ function _toast(msg) {
   setTimeout(() => el.remove(), 2400);
 }
 
-// REGEN BRIDGE 
+// Regen bridge
 function regenEmail(num) {
   const config = typeof getFormValues === 'function' ? getFormValues() : null;
   if (config && typeof regenerateEmail === 'function') regenerateEmail(num, config);
 }
 
-// REPLY ANALYZER RENDER
+// Reply Analyzer
 function renderReplyOutput(data) {
   const container = document.getElementById('replyOutputContainer');
   if (!container) return;
@@ -419,5 +417,67 @@ function renderReplyOutput(data) {
   document.getElementById('outReplyNextAction').textContent = data.next_action_plan;
   document.getElementById('outReplyCoaching').textContent = data.coaching_note;
   
+  container.classList.remove('hidden');
+}
+
+// Simulator Renderer
+function renderSimulatorOutput(data) {
+  const container = document.getElementById('simOutputContainer');
+  if (!container) return;
+
+  // Header Scores
+  const scoreEl = document.getElementById('outSimScore');
+  scoreEl.textContent = `${data.overall_score}/100`;
+  scoreEl.style.color = data.overall_score > 75 ? '#4ade80' : (data.overall_score > 50 ? '#facc15' : '#f87171');
+  
+  document.getElementById('outSimVerdict').textContent = data.overall_verdict;
+
+  // Top Improvements
+  const impList = document.getElementById('outSimImprovements');
+  impList.innerHTML = data.top_improvements.map(imp => `<li style="margin-bottom: 0.5rem;">${esc(imp)}</li>`).join('');
+
+  // Email Cards with Indigo Blockquotes
+  const cardsContainer = document.getElementById('outSimCardsContainer');
+  
+  // Helper to colorize probability badges
+  const getBadgeColor = (val) => {
+    const v = val.toLowerCase();
+    if (v.includes('high')) return '#4ade80'; // Green
+    if (v.includes('medium')) return '#facc15'; // Yellow
+    return '#f87171'; // Red
+  };
+
+  cardsContainer.innerHTML = data.email_simulations.map(sim => `
+    <div style="border: 1px solid #333; padding: 1.5rem; background: #0a0a0a; border-radius: 4px;">
+      
+      <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #222; padding-bottom: 1rem; margin-bottom: 1rem;">
+        <span style="font-family: 'Space Mono', monospace; font-size: 1.1rem; font-weight: bold; color: #fff;">[ EMAIL ${sim.step_number} ]</span>
+        <div style="display: flex; gap: 1rem;">
+          <div style="font-family: 'Space Mono', monospace; font-size: 0.75rem; display: flex; align-items: center; gap: 0.5rem;">
+            <span style="color: #888;">OPEN:</span>
+            <span style="background: ${getBadgeColor(sim.open_likelihood)}; color: #000; padding: 2px 6px; border-radius: 2px; font-weight: bold;">${sim.open_likelihood.toUpperCase()}</span>
+          </div>
+          <div style="font-family: 'Space Mono', monospace; font-size: 0.75rem; display: flex; align-items: center; gap: 0.5rem;">
+            <span style="color: #888;">REPLY:</span>
+            <span style="background: ${getBadgeColor(sim.reply_probability)}; color: #000; padding: 2px 6px; border-radius: 2px; font-weight: bold;">${sim.reply_probability.toUpperCase()}</span>
+          </div>
+        </div>
+      </div>
+
+      <div style="margin-bottom: 1.5rem;">
+        <span style="font-family: 'Space Mono', monospace; font-size: 0.8rem; color: #888; text-transform: uppercase;">Prospect Inner Monologue:</span>
+        <blockquote style="margin: 0.5rem 0 0 0; padding: 0.75rem 1rem; border-left: 4px solid #4f46e5; background: #111; color: #e5e7eb; font-family: 'Space Grotesk', sans-serif; font-style: italic;">
+          "${esc(sim.prospect_monologue)}"
+        </blockquote>
+      </div>
+
+      <div style="font-family: 'Space Grotesk', sans-serif; color: #ccc; font-size: 0.95rem; line-height: 1.5;">
+        <p style="margin-bottom: 0.5rem;"><strong>Weakest Element:</strong> <span style="color: #f87171;">${esc(sim.weakest_element)}</span></p>
+        <p><strong>Coach's Fix:</strong> <span style="color: #60a5fa;">${esc(sim.fix_suggestion)}</span></p>
+      </div>
+
+    </div>
+  `).join('');
+
   container.classList.remove('hidden');
 }
