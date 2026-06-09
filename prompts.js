@@ -1,6 +1,3 @@
-// EMAIL SEQUENCE CONFIGURATIONS 
-// Each sequence length maps to a specific set of angles + techniques.
-// Technique names are injected into the prompt so the AI understands the psychological tool it is expected to employ.
 const EMAIL_SEQUENCE_MAP = {
   3: [
     { num: 1, day: 1,  angle: "Cold Introduction + Value Hook",  technique: "Pattern interrupt opening + specific outcome anchoring" },
@@ -22,10 +19,7 @@ const EMAIL_SEQUENCE_MAP = {
   ]
 };
 
-// EXPERT PERSONA 
-// This persona is injected at the top of every prompt.
-// It establishes a consistent expert identity and quality standard
-// across all six API calls, regardless of which module is generating.
+
 function getSystemPersona() {
   return `You are Marcus Webb, a senior B2B cold email strategist with 15 years of experience 
 running outbound campaigns for SaaS companies, agencies, and consultancies. 
@@ -44,14 +38,11 @@ No preamble. No closing remarks. No Markdown decorators. No apologies.
 Just the clean, labeled, structured output — nothing else.`;
 }
 
-// EMAIL PROMPT BUILDER 
-// Called once per email in the sequence. The previousSummary parameter
-// is what enables context threading — each email "knows" what came before it.
+// Email prompt builder
 function buildEmailPrompt(config, emailStep, previousSummary = null) {
   const { product, icp, goal, tone, length } = config;
   const { num, day, angle, technique } = emailStep;
 
-  // Context threading block: changes based on whether a prior email exists.
   const contextBlock = previousSummary
     ? `PREVIOUS EMAIL CONTEXT (for narrative continuity):
 "${previousSummary}"
@@ -101,9 +92,6 @@ VARIANT_SUBJECT_B: [Alternative subject — phrased as a question]
 VARIANT_SUBJECT_C: [Alternative subject — ultra-short, 1–4 words maximum]`;
 }
 
-// LINKEDIN PROMPT BUILDER 
-// Generates a complete 3-touch LinkedIn sequence + voicemail script.
-// The "value-first, ask-second" philosophy is baked into the prompt instructions.
 function buildLinkedInPrompt(config) {
   const { product, icp, goal, tone } = config;
   return `${getSystemPersona()}
@@ -142,9 +130,7 @@ WHY_THIS_SEQUENCE_WORKS: [3–4 sentences on the psychology of value-first Linke
   outreach and why delaying the ask until DM 2 produces higher conversion than pitching on contact.]`;
 }
 
-// OBJECTION BANK PROMPT BUILDER 
-// Generates 5 tailored objection responses, each with a bridge question
-// that keeps the conversation alive without applying pressure.
+// Generates 5 tailored objection responses, each with a bridge question that keeps the conversation alive without applying pressure.
 function buildObjectionBankPrompt(config) {
   const { product, icp, goal } = config;
   return `${getSystemPersona()}
@@ -188,9 +174,42 @@ OBJECTION_PHILOSOPHY: [3–4 sentences on the psychological framework behind con
   objection handling and why curiosity-based responses outperform defensive responses in B2B outreach.]`;
 }
 
-// QUICK START ICP TEMPLATES 
-// Pre-filled ICP data for 8 common verticals.
-// Applied to form fields when a user selects a preset.
+// Handle responses
+function buildReplyAnalyzerPrompt(incomingReply, config) {
+  return `You are an elite B2B Sales Development Manager and conversation strategist. Your goal is to analyze an incoming reply from a prospect and coach an SDR on exactly how to respond.
+
+### CAMPAIGN CONTEXT
+* Product/Service: ${config.product}
+* Target ICP: ${config.icp}
+* Ultimate Goal: ${config.goal}
+
+### INCOMING PROSPECT REPLY
+"${incomingReply}"
+
+### INSTRUCTIONS & GUARDRAILS
+1. Analyze the prospect's reply to determine their underlying mindset, objections, and intent.
+2. Draft a highly conversational, empathetic, and concise response (Maximum 3 sentences).
+3. STRICT COPYWRITING RULES for the 'recommended_response':
+   - DO NOT use greetings like "Hi [Name]" or "Dear [Name]" (the UI will handle this).
+   - DO NOT use filler phrases like "I hope this helps" or "I understand."
+   - If the reply is a Soft Objection, validate it directly before pivoting.
+   - If the reply is a Hard No, be gracious, do not push back, and leave the door open.
+   - Keep the reading level at an 8th-grade standard. Mimic human text messaging energy.
+
+### OUTPUT FORMAT
+You must respond ONLY with a valid JSON object. Do not include markdown code blocks (e.g., \`\`\`json), conversational filler, or explanations outside the JSON. Use this exact schema:
+
+{
+  "reply_category": "Select one: Positive/Interested | Soft Objection | Hard No | Timing Delay | Wrong Person | Info Request | Ghost/Auto-Reply",
+  "temperature": "Select one: Hot | Warm | Cold | Frozen",
+  "temperature_reason": "One concise sentence explaining why you assigned this temperature.",
+  "recommended_response": "The 2-3 sentence drafted reply following the strict copywriting rules.",
+  "next_action_plan": "Specific next step and timing (e.g., 'Send response today, if no reply in 3 days, call them' or 'Close out sequence, set CRM reminder for 6 months').",
+  "coaching_note": "1-2 sentences explaining the psychology behind the prospect's reply and why the recommended response is designed the way it is."
+}`;
+}
+
+// Pre-filled ICP data.
 const ICP_TEMPLATES = {
   saas_revops: {
     product: "Revenue operations SaaS platform that unifies CRM, marketing automation, and sales analytics into a single reporting layer",
