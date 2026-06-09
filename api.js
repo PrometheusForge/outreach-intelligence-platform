@@ -26,6 +26,7 @@ async function callGemini(prompt, apiKey) {
   return text;
 }
 
+// MAIN ORCHESTRATOR 
 async function generateAll() {
   const apiKey = document.getElementById('apiKeyInput').value.trim();
   if (!apiKey) { alert('Paste your Gemini API key in the header first.'); return; }
@@ -33,51 +34,68 @@ async function generateAll() {
   const config = getFormValues();
   if (!config) return;
 
-  const seqLen    = parseInt(config.length);
-  const steps     = EMAIL_SEQUENCE_MAP[seqLen];
-  const totalSteps = seqLen + 2; // emails + LinkedIn + objections
+  // 1. Read toggle states
+  const runEmails = document.getElementById('modEmails').checked;
+  const runLinkedIn = document.getElementById('modLinkedIn').checked;
+  const runObjections = document.getElementById('modObjections').checked;
 
-  setGenerating(true);
+  if (!runEmails && !runLinkedIn && !runObjections) {
+    alert('⚠ Please select at least one module to generate.');
+    return;
+  }
+
+  const seqLen = parseInt(config.length);
+  const steps = typeof EMAIL_SEQUENCE_MAP !== 'undefined' ? EMAIL_SEQUENCE_MAP[seqLen] : []; // Fallback safeguard
+  
+  // 2. Calculate dynamic loading steps
+  let totalSteps = 0;
+  if (runEmails) totalSteps += seqLen;
+  if (runLinkedIn) totalSteps += 1;
+  if (runObjections) totalSteps += 1;
+
+  setGenerating(true, totalSteps);
   clearOutputs();
-  showOutputSection();
+  showOutputSection(runEmails, runLinkedIn, runObjections);
 
   let done = 0;
   let previousSummary = null;
 
   try {
-    // 1. Generate emails sequentially
-    for (const step of steps) {
-      updateProgress(`Writing Email ${step.num} of ${seqLen}: "${step.angle}"…`, (done / totalSteps) * 100);
-
-      const prompt  = buildEmailPrompt(config, step, previousSummary);
-      const raw     = await callGemini(prompt, apiKey);
-      const parsed  = parseEmailOutput(raw, step);
-
-      renderEmailCard(parsed, step);
-
-      // Thread the one-sentence summary into the next email's context block
-      previousSummary = parsed.internalSummary || `Email ${step.num} covered the "${step.angle}" angle.`;
-
-      done++;
-
-      if (done < seqLen) await sleep(2000);
+    // GENERATE EMAILS 
+    if (runEmails) {
+      for (const step of steps) {
+        updateProgress(`Writing Email ${step.num} of ${seqLen}: "${step.angle}"…`, (done / totalSteps) * 100);
+        const prompt  = buildEmailPrompt(config, step, previousSummary);
+        const raw     = await callGemini(prompt, apiKey);
+        const parsed  = parseEmailOutput(raw, step);
+        renderEmailCard(parsed, step);
+        previousSummary = parsed.internalSummary || `Email ${step.num} covered the "${step.angle}" angle.`;
+        
+        done++;
+        if (done < totalSteps) await sleep(2000);
+      }
     }
 
-    // Generate LinkedIn sequence
-    updateProgress('Building LinkedIn sequence…', (done / totalSteps) * 100);
-    await sleep(2000);
-    const liRaw    = await callGemini(buildLinkedInPrompt(config), apiKey);
-    renderLinkedInOutput(parseLinkedInOutput(liRaw));
-    done++;
+    // GENERATE LINKEDIN 
+    if (runLinkedIn) {
+      updateProgress('Building LinkedIn network strategy…', (done / totalSteps) * 100);
+      const liRaw = await callGemini(buildLinkedInPrompt(config), apiKey);
+      renderLinkedInOutput(parseLinkedInOutput(liRaw));
+      
+      done++;
+      if (done < totalSteps) await sleep(2000);
+    }
 
-    // objection bank 
-    updateProgress('Generating objection bank…', (done / totalSteps) * 100);
-    await sleep(2000);
-    const objRaw   = await callGemini(buildObjectionBankPrompt(config), apiKey);
-    renderObjectionOutput(parseObjectionOutput(objRaw));
-    done++;
+    // C. GENERATE OBJECTIONS 
+    if (runObjections) {
+      updateProgress('Generating threat objection bank…', (done / totalSteps) * 100);
+      const objRaw = await callGemini(buildObjectionBankPrompt(config), apiKey);
+      renderObjectionOutput(parseObjectionOutput(objRaw));
+      
+      done++;
+    }
 
-    updateProgress('✅ Outreach suite complete!', 100);
+    updateProgress('✅ Execution complete!', 100);
 
   } catch (err) {
     showError(`⚠ ${err.message}`);
@@ -136,7 +154,7 @@ function setGenerating(on) {
   prog.classList.toggle('hidden', !on);
 }
 
-
+// SINGLE REPLY ANALYSIS ORCHESTRATOR
 async function analyzeReply() {
   const apiKey = document.getElementById('apiKeyInput').value.trim();
   if (!apiKey) { alert('Paste your Gemini API key in the header first.'); return; }
