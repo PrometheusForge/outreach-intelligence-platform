@@ -97,9 +97,18 @@ async function generateAll() {
       const liRaw = await callGemini(liPrompt, apiKey);
       
       let cleanJson = liRaw.replace(/```json/gi, '').replace(/```/g, '').trim();
-      const jsonMatch = cleanJson.match(/\{[\s\S]*\}/);
-      if (!jsonMatch) throw new Error("Failed to extract JSON object from LinkedIn response.");
-      cleanJson = jsonMatch[0];
+      
+      // Look for the first opening bracket and last closing bracket
+      const startIndex = cleanJson.indexOf('{');
+      const endIndex = cleanJson.lastIndexOf('}');
+      
+      // DIAGNOSTIC NET: If there are no brackets, show us EXACTLY what the AI wrote
+      if (startIndex === -1 || endIndex === -1) {
+        console.error("[SYS: RAW AI OUTPUT]", liRaw);
+        throw new Error(`The AI ignored the JSON formatting rules. It outputted this instead:\n\n"${liRaw}"`);
+      }
+      
+      cleanJson = cleanJson.substring(startIndex, endIndex + 1);
       
       const parsedLi = JSON.parse(cleanJson);
       renderLinkedInOutput({
