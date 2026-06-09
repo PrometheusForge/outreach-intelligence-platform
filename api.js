@@ -26,7 +26,7 @@ async function callGemini(prompt, apiKey) {
   return text;
 }
 
-
+// MAIN ORCHESTRATOR
 async function generateAll() {
   const apiKey = document.getElementById('apiKeyInput').value.trim();
   if (!apiKey) { alert('Paste your Gemini API key in the header first.'); return; }
@@ -34,7 +34,7 @@ async function generateAll() {
   const config = getFormValues();
   if (!config) return;
 
-  // Read toggle states
+  // 1. Read all 5 toggle states
   const runEmails = document.getElementById('modEmails').checked;
   const runLinkedIn = document.getElementById('modLinkedIn').checked;
   const runObjections = document.getElementById('modObjections').checked;
@@ -46,7 +46,7 @@ async function generateAll() {
     return;
   }
 
-  // Simulator failsafe: can't simulate emails if they're not generated
+  // Simulator failsafe: You can't simulate emails if you aren't generating them
   if (runSim && !runEmails) {
     alert('⚠ Pre-Flight Simulator requires the 01_EMAILS module to be checked.');
     return;
@@ -55,7 +55,7 @@ async function generateAll() {
   const seqLen = parseInt(config.length);
   const steps = typeof EMAIL_SEQUENCE_MAP !== 'undefined' ? EMAIL_SEQUENCE_MAP[seqLen] : [];
   
-  // loading steps
+  // 2. Calculate dynamic loading steps
   let totalSteps = 0;
   if (runEmails) totalSteps += seqLen;
   if (runLinkedIn) totalSteps += 1;
@@ -65,13 +65,17 @@ async function generateAll() {
 
   setGenerating(true, totalSteps);
   clearOutputs();
-  showOutputSection(runEmails, runLinkedIn, runObjections, runSim, runReply);
+  
+  // Force UI to show the selected tabs immediately
+  if (typeof showOutputSection === 'function') {
+    showOutputSection(runEmails, runLinkedIn, runObjections, runSim, runReply);
+  }
 
   let done = 0;
   let previousSummary = null;
 
   try {
-    // GENERATE EMAILS 
+    // [A] GENERATE EMAILS 
     if (runEmails) {
       for (const step of steps) {
         updateProgress(`Writing Email ${step.num} of ${seqLen}: "${step.angle}"…`, (done / totalSteps) * 100);
@@ -86,24 +90,18 @@ async function generateAll() {
       }
     }
 
-    // GENERATE LINKEDIN 
+    // [B] GENERATE LINKEDIN (Strict JSON + Safety Net)
     if (runLinkedIn) {
       updateProgress('Building LinkedIn network strategy…', (done / totalSteps) * 100);
-      
       const liPrompt = buildLinkedInPrompt(config);
       const liRaw = await callGemini(liPrompt, apiKey);
       
-      // 1. Clean markdown formatting
       let cleanJson = liRaw.replace(/```json/gi, '').replace(/```/g, '').trim();
-      
-      // 2. Safety Net: Extract only the JSON object, ignoring any conversational filler Gemini might have added
       const jsonMatch = cleanJson.match(/\{[\s\S]*\}/);
       if (!jsonMatch) throw new Error("Failed to extract JSON object from LinkedIn response.");
       cleanJson = jsonMatch[0];
       
-      // 3. Parse and Map natively (Bypassing parser.js completely)
       const parsedLi = JSON.parse(cleanJson);
-      
       renderLinkedInOutput({
         connectionRequest: parsedLi.connection_request || parsedLi.CONNECTION_REQUEST,
         dm1: parsedLi.dm_1 || parsedLi.FOLLOW_UP_DM_1,
@@ -116,7 +114,7 @@ async function generateAll() {
       if (done < totalSteps) await sleep(2000);
     }
 
-    // GENERATE OBJECTIONS 
+    // [C] GENERATE OBJECTIONS 
     if (runObjections) {
       updateProgress('Generating threat objection bank…', (done / totalSteps) * 100);
       const objRaw = await callGemini(buildObjectionBankPrompt(config), apiKey);
@@ -125,32 +123,39 @@ async function generateAll() {
       if (done < totalSteps) await sleep(2000);
     }
 
-    // PRE-FLIGHT SIMULATOR
+    // [D] RUN PRE-FLIGHT SIMULATOR (Strict JSON + Safety Net)
     if (runSim) {
       updateProgress('Running prospect stress-test simulation…', (done / totalSteps) * 100);
       const emails = Object.values(_store).filter(Boolean);
       const simPrompt = buildPerformanceSimulatorPrompt(emails, config);
       const simRaw = await callGemini(simPrompt, apiKey);
-      const simJson = JSON.parse(simRaw.replace(/```json/gi, '').replace(/```/g, '').trim());
+      
+      let cleanSim = simRaw.replace(/```json/gi, '').replace(/```/g, '').trim();
+      const simMatch = cleanSim.match(/\{[\s\S]*\}/);
+      if (!simMatch) throw new Error("Failed to extract JSON object from Simulator response.");
+      
+      const simJson = JSON.parse(simMatch[0]);
       renderSimulatorOutput(simJson);
       done++;
       if (done < totalSteps) await sleep(2000);
     }
 
-    // MOCK REPLY ANALYSIS
+    // [E] RUN MOCK REPLY ANALYSIS (Strict JSON + Safety Net)
     if (runReply) {
       updateProgress('Generating Day-0 Mock Reply Playbook…', (done / totalSteps) * 100);
-      
-      //mock incoming reply to demonstrate
       const mockReply = `Thanks for reaching out, but we are currently using another vendor for this and aren't looking to switch right now.`;
       
-      // user sees analysis
       const replyBox = document.getElementById('fieldIncomingReply');
       if (replyBox) replyBox.value = mockReply;
 
       const replyPrompt = buildReplyAnalyzerPrompt(mockReply, config);
       const replyRaw = await callGemini(replyPrompt, apiKey);
-      const replyJson = JSON.parse(replyRaw.replace(/```json/gi, '').replace(/```/g, '').trim());
+      
+      let cleanRep = replyRaw.replace(/```json/gi, '').replace(/```/g, '').trim();
+      const repMatch = cleanRep.match(/\{[\s\S]*\}/);
+      if (!repMatch) throw new Error("Failed to extract JSON object from Reply response.");
+      
+      const replyJson = JSON.parse(repMatch[0]);
       renderReplyOutput(replyJson);
       done++;
     }
@@ -158,6 +163,8 @@ async function generateAll() {
     updateProgress('✅ Full execution complete!', 100);
 
   } catch (err) {
+    // BUG FIX: Alert the user globally so errors never hide in closed tabs
+    alert(`⚠ Execution Failed:\n\n${err.message}`);
     showError(`⚠ ${err.message}`);
   } finally {
     setGenerating(false);
