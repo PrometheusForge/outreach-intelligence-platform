@@ -1,28 +1,23 @@
 /* DESIGN TOKENS - INDUSTRIAL BRUTALISM */
 :root {
-  /* Absolute Deep Dark */
-  --bg-base:     #050505;
-  --bg-surface:  #0A0A0A;
-  --bg-elevated: #111111;
-  --bg-input:    #050505;
+  --bg-base:     #09040F;
+--bg-surface:  #11081C;
+--bg-elevated: #1A0D2A;
+--bg-input:    #09040F;
 
-  /* Razor sharp structural borders */
-  --bdr-faint:   #1A1A1A;
-  --bdr-subtle:  #2A2A2A;
-  --bdr-mid:     #404040;
+--bdr-faint:   #221433;
+--bdr-subtle:  #321E4A;
+--bdr-mid:     #4A2D6E;
 
-  /* Accent: Chartreuse/Terminal Lime */
-  --accent:       #CCFF00;
-  --accent-dim:   #99BF00;
-  --accent-ghost: rgba(204, 255, 0, 0.1);
+--accent:       #00E5FF;
+--accent-dim:   #00B3CC;
+--accent-ghost: rgba(0, 229, 255, 0.1);
 
-  /* Alert: Hazard Red */
-  --danger:       #FF2A2A;
+--danger:       #FF3366;
 
-  /* Typography Colors */
-  --text-hi:  #F2F2F2;
-  --text-mid: #A0A0A0;
-  --text-lo:  #666666;
+--text-hi: #F2F5FF;
+--text-mid: #A0A5B5;
+--text-lo: #666A7A;
 
   /* Typography Architecture */
   --f-display: 'Space Grotesk', sans-serif;
