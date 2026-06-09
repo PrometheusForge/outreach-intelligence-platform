@@ -1,17 +1,19 @@
-const GEMINI_MODEL    = 'gemini-2.5-pro';
-const GEMINI_ENDPOINT = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent`;
+const GROQ_MODEL    = 'llama-3.3-70b-versatile';
+const GROQ_ENDPOINT = 'https://api.groq.com/openai/v1/chat/completions';
 
-async function callGemini(prompt, apiKey) {
-  const res = await fetch(`${GEMINI_ENDPOINT}?key=${apiKey}`, {
+async function callGroq(prompt, apiKey) {
+  const res = await fetch(GROQ_ENDPOINT, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${apiKey}`
+    },
     body: JSON.stringify({
-      contents: [{ parts: [{ text: prompt }] }],
-      generationConfig: {
-        temperature: 0.85,   // High creativity;
-        topP: 0.95,
-        maxOutputTokens: 1300
-      }
+      model: GROQ_MODEL,
+      messages: [{ role: 'user', content: prompt }],
+      temperature: 0.85,  
+      top_p: 0.95,
+      max_completion_tokens: 1300
     })
   });
 
@@ -21,15 +23,15 @@ async function callGemini(prompt, apiKey) {
   }
 
   const data = await res.json();
-  const text = data?.candidates?.[0]?.content?.parts?.[0]?.text;
-  if (!text) throw new Error('Empty response from Gemini. Try again.');
+  const text = data?.choices?.[0]?.message?.content;
+  if (!text) throw new Error('Empty response from Groq. Try again.');
   return text;
 }
 
 // MAIN ORCHESTRATOR
 async function generateAll() {
   const apiKey = document.getElementById('apiKeyInput').value.trim();
-  if (!apiKey) { alert('Paste your Gemini API key in the header first.'); return; }
+  if (!apiKey) { alert('Paste your Groq API key in the header first.'); return; }
 
   const config = getFormValues();
   if (!config) return;
@@ -80,7 +82,7 @@ async function generateAll() {
       for (const step of steps) {
         updateProgress(`Writing Email ${step.num} of ${seqLen}: "${step.angle}"…`, (done / totalSteps) * 100);
         const prompt = buildEmailPrompt(config, step, previousSummary);
-        const raw = await callGemini(prompt, apiKey);
+        const raw = await callGroq(prompt, apiKey);
         const parsed = parseEmailOutput(raw, step);
         renderEmailCard(parsed, step);
         previousSummary = parsed.internalSummary || `Email ${step.num} covered the "${step.angle}" angle.`;
@@ -93,7 +95,7 @@ async function generateAll() {
     // GENERATE LINKEDIN (Strict JSON + Safety Net)
     if (runLinkedIn) {
       updateProgress('Building LinkedIn network strategy…', (done / totalSteps) * 100);
-      const liRaw = await callGemini(buildLinkedInPrompt(config), apiKey);
+      const liRaw = await callGroq(buildLinkedInPrompt(config), apiKey);
       renderLinkedInOutput(parseLinkedInOutput(liRaw));
       
       done++;
@@ -103,7 +105,7 @@ async function generateAll() {
     // [C] GENERATE OBJECTIONS 
     if (runObjections) {
       updateProgress('Generating threat objection bank…', (done / totalSteps) * 100);
-      const objRaw = await callGemini(buildObjectionBankPrompt(config), apiKey);
+      const objRaw = await callGroq(buildObjectionBankPrompt(config), apiKey);
       renderObjectionOutput(parseObjectionOutput(objRaw));
       done++;
       if (done < totalSteps) await sleep(2000);
@@ -114,7 +116,7 @@ async function generateAll() {
       updateProgress('Running prospect stress-test simulation…', (done / totalSteps) * 100);
       const emails = Object.values(_store).filter(Boolean);
       const simPrompt = buildPerformanceSimulatorPrompt(emails, config);
-      const simRaw = await callGemini(simPrompt, apiKey);
+      const simRaw = await callGroq(simPrompt, apiKey);
       
       let cleanSim = simRaw.replace(/```json/gi, '').replace(/```/g, '').trim();
       const simMatch = cleanSim.match(/\{[\s\S]*\}/);
@@ -135,7 +137,7 @@ async function generateAll() {
       if (replyBox) replyBox.value = mockReply;
 
       const replyPrompt = buildReplyAnalyzerPrompt(mockReply, config);
-      const replyRaw = await callGemini(replyPrompt, apiKey);
+      const replyRaw = await callGroq(replyPrompt, apiKey);
       
       let cleanRep = replyRaw.replace(/```json/gi, '').replace(/```/g, '').trim();
       const repMatch = cleanRep.match(/\{[\s\S]*\}/);
@@ -166,14 +168,13 @@ async function regenerateEmail(emailNum, config) {
   showEmailLoading(emailNum);
 
   try {
-    const raw    = await callGemini(buildEmailPrompt(config, step, null), apiKey);
+    const raw    = await callGroq(buildEmailPrompt(config, step, null), apiKey);
     const parsed = parseEmailOutput(raw, step);
     renderEmailCard(parsed, step);
   } catch (err) {
     showError(`Regeneration failed: ${err.message}`);
   }
 }
-
 
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 
@@ -210,7 +211,7 @@ function setGenerating(on) {
 // SINGLE REPLY ANALYSIS ORCHESTRATOR
 async function analyzeReply() {
   const apiKey = document.getElementById('apiKeyInput').value.trim();
-  if (!apiKey) { alert('Paste your Gemini API key in the header first.'); return; }
+  if (!apiKey) { alert('Paste your Groq API key in the header first.'); return; }
 
   const incomingReply = document.getElementById('fieldIncomingReply').value.trim();
   if (!incomingReply) { alert('Please paste an incoming prospect reply first.'); return; }
@@ -225,7 +226,7 @@ async function analyzeReply() {
 
   try {
     const prompt = buildReplyAnalyzerPrompt(incomingReply, config);
-    const raw = await callGemini(prompt, apiKey);
+    const raw = await callGroq(prompt, apiKey);
     
     // Clean if LLM wraps the JSON
     const cleanJson = raw.replace(/```json/gi, '').replace(/```/g, '').trim();
@@ -245,7 +246,7 @@ async function analyzeReply() {
 // PRE-FLIGHT SIMULATOR
 async function runSimulator() {
   const apiKey = document.getElementById('apiKeyInput').value.trim();
-  if (!apiKey) { alert('Paste your Gemini API key in the header first.'); return; }
+  if (!apiKey) { alert('Paste your Groq API key in the header first.'); return; }
 
   const emails = Object.values(_store).filter(Boolean);
   if (emails.length === 0) { 
@@ -263,7 +264,7 @@ async function runSimulator() {
 
   try {
     const prompt = buildPerformanceSimulatorPrompt(emails, config);
-    const raw = await callGemini(prompt, apiKey);
+    const raw = await callGroq(prompt, apiKey);
     
     const cleanJson = raw.replace(/```json/gi, '').replace(/```/g, '').trim();
     const parsedData = JSON.parse(cleanJson);
