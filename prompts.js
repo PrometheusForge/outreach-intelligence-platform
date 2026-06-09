@@ -94,40 +94,38 @@ VARIANT_SUBJECT_C: [Alternative subject — ultra-short, 1–4 words maximum]`;
 
 function buildLinkedInPrompt(config) {
   const { product, icp, goal, tone } = config;
-  return `${getSystemPersona()}
+  
+  // Failsafe in case getSystemPersona isn't globally available
+  const persona = typeof getSystemPersona === 'function' ? getSystemPersona() : 'You are a senior copywriter and sales strategist.';
 
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-CAMPAIGN BRIEF
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-Product / Service : ${product}
-Ideal Customer Profile : ${icp}
-Campaign Goal : ${goal}
-Tone : ${tone}
+  return `${persona}
 
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-YOUR TASK: LinkedIn Multi-Touch Sequence
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-Write a complete LinkedIn cold outreach sequence using value-first sequencing.
-
-MANDATORY OUTPUT — exact labels only:
-
-CONNECTION_REQUEST: [Max 300 characters. Zero pitch. Lead with a genuine observation, 
-  shared context, or a single insight relevant to their role. End with a natural reason to connect. 
-  Must not feel like a sales opener.]
-
-FOLLOW_UP_DM_1: [Day 2 after connection accepted. Max 380 characters. 
-  Share one concrete insight, useful data point, or micro-tip that is genuinely relevant 
-  to their role. Do NOT make any ask. Do NOT say "I wanted to follow up."]
-
-FOLLOW_UP_DM_2: [Day 7. Max 380 characters. Reference DM 1 briefly. 
-  Now make the soft ask — frame it as a quick exchange or idea share, not a sales call.]
-
-VOICEMAIL_SCRIPT: [30-second cold voicemail if they pick up unexpectedly. Max 75 words. 
-  State name, company, a single compelling reason for the call, specific callback ask with timeframe. 
-  Must sound conversational, not scripted.]
-
-WHY_THIS_SEQUENCE_WORKS: [3–4 sentences on the psychology of value-first LinkedIn 
-  outreach and why delaying the ask until DM 2 produces higher conversion than pitching on contact.]`;
+  Write a LinkedIn cold outreach sequence. The core directive: remove all signs of AI-generated writing. It needs a pulse, an opinion, and a natural rhythm. Do not write a sterile press release.
+  
+  ### CAMPAIGN BRIEF
+  * Product / Service: ${product}
+  * Target Audience (ICP): ${icp}
+  * Goal: ${goal}
+  * Tone: ${tone}
+  
+  ### THE HUMANIZER RULES (STRICT ENFORCEMENT)
+  1. Ban AI Filler & Buzzwords: Strip out words like delve, landscape, tapestry, testament, underscore, showcase, pivotal, crucial, vibrant, and seamless.
+  2. No Copula Avoidance: Stop substituting simple verbs. Use "is" and "are" instead of "serves as," "functions as," or "stands as".
+  3. Kill the "-ing" Appendages: Don't drag out sentences with superficial analyses (e.g., "...reflecting broader industry trends"). Use short, punchy sentences.
+  4. Break the Rule of Three: AI forces ideas into threes to sound comprehensive (e.g., "faster, cheaper, and better"). Pick the single strongest point and stop there.
+  5. No Fake Pleasantries: Skip "Hope this finds you well" or "I was so impressed by your background." Humans texting peers don't talk like that.
+  6. A Real Soft Ask: Asking for a "quick 15-minute sync" is a hard ask. A soft ask checks interest only (e.g., "Open to taking a look?", "Opposed to seeing a short breakdown?").
+  
+  ### OUTPUT FORMAT
+  Return pure JSON. No markdown wrappers (like \`\`\`json), no introductory text, and no collaborative filler like "Here is your sequence!". Just the raw object. Use this exact schema:
+  
+  {
+    "connection_request": "Max 250 characters. No pitch. Make a highly specific observation about their actual day-to-day work. End with a natural, peer-to-peer reason to connect.",
+    "dm_1": "Day 2 follow-up. Max 300 characters. Share one concrete insight or micro-tip relevant to their role. Do not ask for anything. Do not say 'I wanted to follow up.'",
+    "dm_2": "Day 7 follow-up. Max 300 characters. Pivot to the core problem our product solves. End with a 2-4 word low-friction, interest-based ask.",
+    "voicemail_script": "30-second cold script. Use spoken-word syntax—include em-dashes for natural pauses, maybe a slight tangent. State your name, company, the single reason for calling, and a relaxed callback request.",
+    "why_it_works": "Explain why this sequence avoids the usual 'AI slop' traps and how the psychology of the messaging works."
+  }`;
 }
 
 // Generates 5 tailored objection responses, each with a bridge question that keeps the conversation alive without applying pressure.
