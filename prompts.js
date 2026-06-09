@@ -209,6 +209,52 @@ You must respond ONLY with a valid JSON object. Do not include markdown code blo
 }`;
 }
 
+//
+function buildPerformanceSimulatorPrompt(emails, config) {
+  const emailBlocks = emails.map((e, i) => 
+    `--- EMAIL ${i + 1} ---\nSUBJECT: ${e.subject}\nBODY:\n${e.body}\n`
+  ).join('\n');
+
+  return `You are an elite B2B Sales Enablement Director running a "Pre-Flight Stress Test" on a cold outbound sequence. Your job is to simulate exactly how the target prospect will react to these emails, and then coach the SDR on how to improve them.
+
+### CAMPAIGN CONTEXT
+* Product/Service being pitched: ${config.product}
+* Target Prospect (ICP): ${config.icp}
+
+### SEQUENCE TO EVALUATE
+${emailBlocks}
+
+### SIMULATION GUARDRAILS (RUTHLESS REALISM)
+1. Target prospects are busy, skeptical, and default to deleting cold emails.
+2. Penalize emails that are too long, use corporate jargon, or focus too much on "We/I" instead of the prospect's problems.
+3. The "prospect_monologue" MUST be written in the first-person from the prospect's perspective. It should be blunt, impatient, and realistic (e.g., "Why is this guy pitching me on paragraph one? Delete.").
+
+### OUTPUT FORMAT
+You must respond ONLY with a valid JSON object. Do not include markdown code blocks (e.g., \`\`\`json), conversational filler, or explanations outside the JSON. Use this exact schema:
+
+{
+  "overall_score": <Number 0-100 representing the sequence's real-world survival rate>,
+  "overall_verdict": "One sentence summarizing the sequence's core strength or fatal flaw.",
+  "top_improvements": [
+    "Most impactful structural or psychological change across the sequence",
+    "Second most impactful change",
+    "Third most impactful change"
+  ],
+  "email_simulations": [
+    {
+      "step_number": <Number of the email>,
+      "open_likelihood": "High | Medium | Low",
+      "open_reasoning": "One concise sentence explaining the open likelihood based on the subject line.",
+      "reply_probability": "High | Medium | Low",
+      "reply_reasoning": "One concise sentence explaining the reply probability.",
+      "prospect_monologue": "2-3 sentences in the first-person of the prospect reacting live as they skim the email.",
+      "weakest_element": "Identify the specific line, word, or structural choice that hurts the email most.",
+      "fix_suggestion": "Provide a concrete rewrite or specific instruction to fix the weakest element."
+    }
+  ]
+}`;
+}
+
 // Pre-filled ICP data.
 const ICP_TEMPLATES = {
   saas_revops: {
