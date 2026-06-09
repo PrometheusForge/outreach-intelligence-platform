@@ -95,25 +95,25 @@ function showOutputSection(runEmails, runLinkedIn, runObjections, runSim, runRep
   const out = document.getElementById('outputSection');
   if (out) out.classList.remove('hidden');
   
-  const tabE = document.querySelector('.s-tab[onclick*="Emails"]');
-  const tabL = document.querySelector('.s-tab[onclick*="Linkedin"]');
-  const tabO = document.querySelector('.s-tab[onclick*="Objections"]');
-  const tabS = document.querySelector('.s-tab[onclick*="Simulator"]');
-  const tabR = document.querySelector('.s-tab[onclick*="Reply"]');
+  const tabE = document.querySelector('.s-tab[onclick*="email" i]');
+  const tabL = document.querySelector('.s-tab[onclick*="linkedin" i]');
+  const tabO = document.querySelector('.s-tab[onclick*="objection" i]');
+  const tabS = document.querySelector('.s-tab[onclick*="simulator" i]');
+  const tabR = document.querySelector('.s-tab[onclick*="reply" i]');
 
-  // Display only the checked tabs
+  // Force hide/show based strictly on checkbox state
   if (tabE) tabE.style.display = runEmails ? 'inline-block' : 'none';
   if (tabL) tabL.style.display = runLinkedIn ? 'inline-block' : 'none';
   if (tabO) tabO.style.display = runObjections ? 'inline-block' : 'none';
   if (tabS) tabS.style.display = runSim ? 'inline-block' : 'none';
   if (tabR) tabR.style.display = runReply ? 'inline-block' : 'none';
 
-  // Auto-focus the first selected tab in order of priority
-  if (runEmails) showTab('Emails', tabE);
-  else if (runLinkedIn) showTab('Linkedin', tabL);
-  else if (runObjections) showTab('Objections', tabO);
-  else if (runSim) showTab('Simulator', tabS);
-  else if (runReply) showTab('Reply', tabR);
+  // Auto-focus the first selected tab in logical order
+  if (runEmails && tabE) showTab('Emails', tabE);
+  else if (runLinkedIn && tabL) showTab('Linkedin', tabL);
+  else if (runObjections && tabO) showTab('Objections', tabO);
+  else if (runSim && tabS) showTab('Simulator', tabS);
+  else if (runReply && tabR) showTab('Reply', tabR);
 }
 
 function showError(msg) {
