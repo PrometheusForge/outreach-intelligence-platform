@@ -5,22 +5,19 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Signal — Outreach Intelligence</title>
 
-  <!-- Fonts: Syne (display) + Outfit (body) + JetBrains Mono (technical) -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Outfit:wght@300;400;500;600&family=JetBrains+Mono:ital,wght@0,400;0,500;0,600;1,400&display=swap"
-        rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400&family=Space+Grotesk:wght@400;500;600;700&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
 
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
 
-  <!-- HEADER -->
   <header class="s-header">
     <div class="s-logo">
-      <div class="s-logo-icon">⚡</div>
-      <span class="s-logo-name">Signal</span>
-      <span class="s-logo-tagline">Outreach Intelligence</span>
+      <div class="s-logo-icon"></div>
+      <span class="s-logo-name">SIGNAL</span>
+      <span class="s-logo-tagline">OUTREACH_INTELLIGENCE // v2.0</span>
     </div>
 
     <div class="s-api-row">
@@ -28,92 +25,88 @@
         id="apiKeyInput"
         type="password"
         class="s-api-input"
-        placeholder="Paste Gemini API key…"
+        placeholder="ENTER GEMINI API KEY..."
         autocomplete="off"
         oninput="onApiKeyInput(this.value)"
       />
-      <span id="apiBadge" class="s-live-badge">LIVE</span>
+      <span id="apiBadge" class="s-live-badge">[ SYS: LIVE ]</span>
       <a
         href="https://aistudio.google.com"
         target="_blank"
         rel="noopener noreferrer"
         class="s-api-link"
         aria-label="Get a free Gemini API key"
-      >Get free key ↗</a>
+      >[ GET KEY ↗ ]</a>
     </div>
   </header>
 
-  <!-- MAIN -->
   <main class="s-main">
 
-    <!-- Campaign Brief label -->
-    <div class="s-section-label">Campaign Brief</div>
+    <div class="s-section-label">[ CAMPAIGN PARAMETERS ]</div>
 
-    <!-- Template Quick-Start Pills -->
     <div class="s-pills" id="pillsContainer" role="group" aria-label="Quick-start templates">
-      <button class="s-pill" onclick="pickTemplate(this,'saas_revops')">SaaS → RevOps</button>
-      <button class="s-pill" onclick="pickTemplate(this,'agency_ecomm')">Agency → E-comm</button>
-      <button class="s-pill" onclick="pickTemplate(this,'consulting_cfo')">Consulting → CFOs</button>
-      <button class="s-pill" onclick="pickTemplate(this,'hr_tech')">HR Tech → People Ops</button>
-      <button class="s-pill" onclick="pickTemplate(this,'accounting_freelance')">Accounting → Freelancers</button>
-      <button class="s-pill" onclick="pickTemplate(this,'cybersecurity_midmarket')">Security → IT Directors</button>
-      <button class="s-pill" onclick="pickTemplate(this,'logistics_saas')">Logistics → Ops Mgrs</button>
-      <button class="s-pill" onclick="pickTemplate(this,'legaltech')">LegalTech → Attorneys</button>
+      <button class="s-pill" onclick="pickTemplate(this,'saas_revops')">SaaS &rarr; RevOps</button>
+      <button class="s-pill" onclick="pickTemplate(this,'agency_ecomm')">Agency &rarr; E-comm</button>
+      <button class="s-pill" onclick="pickTemplate(this,'consulting_cfo')">Consulting &rarr; CFOs</button>
+      <button class="s-pill" onclick="pickTemplate(this,'hr_tech')">HR Tech &rarr; People Ops</button>
+      <button class="s-pill" onclick="pickTemplate(this,'accounting_freelance')">Accounting &rarr; Freelance</button>
+      <button class="s-pill" onclick="pickTemplate(this,'cybersecurity_midmarket')">Security &rarr; IT Directors</button>
+      <button class="s-pill" onclick="pickTemplate(this,'logistics_saas')">Logistics &rarr; Ops Mgrs</button>
+      <button class="s-pill" onclick="pickTemplate(this,'legaltech')">LegalTech &rarr; Attorneys</button>
     </div>
 
-    <!-- Form -->
     <div class="s-form" role="form" aria-label="Campaign brief form">
 
       <div class="s-field">
-        <label class="s-label" for="fieldProduct">Product / Service</label>
+        <label class="s-label" for="fieldProduct">PRODUCT / SERVICE PAYLOAD</label>
         <textarea
           id="fieldProduct"
           class="s-textarea"
           rows="2"
-          placeholder='e.g. "Accounting software for freelancers — automates invoicing and quarterly tax estimates"'
+          placeholder="e.g. Accounting software for freelancers — automates invoicing and quarterly tax estimates"
           aria-required="true"
         ></textarea>
       </div>
 
       <div class="s-field">
-        <label class="s-label" for="fieldIcp">Ideal Customer Profile</label>
+        <label class="s-label" for="fieldIcp">IDEAL CUSTOMER PROFILE (ICP)</label>
         <textarea
           id="fieldIcp"
           class="s-textarea"
           rows="2"
-          placeholder='e.g. "Solo graphic designers, 25–40, US-based, $50–150k income, currently using spreadsheets"'
+          placeholder="e.g. Solo graphic designers, 25–40, US-based, $50–150k income, currently using spreadsheets"
           aria-required="true"
         ></textarea>
       </div>
 
       <div class="s-field">
-        <label class="s-label" for="fieldGoal">Campaign Goal</label>
+        <label class="s-label" for="fieldGoal">CONVERSION TARGET</label>
         <input
           id="fieldGoal"
           type="text"
           class="s-input"
-          placeholder='e.g. "Book a 15-minute demo call"'
+          placeholder="e.g. Book a 15-minute demo call"
           aria-required="true"
         />
       </div>
 
       <div class="s-row">
         <div class="s-field">
-          <label class="s-label" for="fieldLength">Sequence Length</label>
+          <label class="s-label" for="fieldLength">SEQUENCE LENGTH</label>
           <select id="fieldLength" class="s-select">
-            <option value="3">3 emails</option>
-            <option value="4">4 emails</option>
-            <option value="5" selected>5 emails</option>
+            <option value="3">03_EMAILS</option>
+            <option value="4">04_EMAILS</option>
+            <option value="5" selected>05_EMAILS</option>
           </select>
         </div>
         <div class="s-field">
-          <label class="s-label" for="fieldTone">Tone</label>
+          <label class="s-label" for="fieldTone">OUTPUT TONE</label>
           <select id="fieldTone" class="s-select">
-            <option value="Conversational and direct">Conversational &amp; direct</option>
-            <option value="Formal and professional">Formal &amp; professional</option>
-            <option value="Casual and friendly">Casual &amp; friendly</option>
-            <option value="Data-driven and analytical">Data-driven</option>
-            <option value="Provocative and bold">Provocative &amp; bold</option>
+            <option value="Conversational and direct">DIRECT & CONVERSATIONAL</option>
+            <option value="Formal and professional">FORMAL & PROFESSIONAL</option>
+            <option value="Casual and friendly">CASUAL</option>
+            <option value="Data-driven and analytical">ANALYTICAL</option>
+            <option value="Provocative and bold">PROVOCATIVE</option>
           </select>
         </div>
       </div>
@@ -123,55 +116,44 @@
         class="s-btn-gen"
         onclick="generateAll()"
         aria-label="Generate full outreach suite"
-      >⚡ Generate Full Outreach Suite</button>
+      >EXECUTE // OUTREACH SUITE</button>
 
-      <!-- Progress track -->
       <div class="s-progress" id="progressContainer" role="status" aria-live="polite">
-        <span class="s-progress-label" id="progressLabel">Initializing…</span>
+        <span class="s-progress-label" id="progressLabel">AWAITING EXECUTION...</span>
         <div class="s-dots" id="progressDots" aria-hidden="true"></div>
       </div>
 
-    </div><!-- /s-form -->
-
-    <!-- OUTPUT SECTION -->
-    <div id="outputSection" class="hidden">
+    </div><div id="outputSection" class="hidden">
 
       <div class="s-divider"></div>
-      <div class="s-section-label">Generated Suite</div>
+      <div class="s-section-label">[ GENERATED TELEMETRY ]</div>
 
-      <!-- Tab control -->
       <div class="s-tab-control" role="tablist" aria-label="Output sections">
         <button class="s-tab active" role="tab" aria-selected="true"
-          onclick="showTab('Emails', this)">📧 Email Sequence</button>
+          onclick="showTab('Emails', this)">[ 01_EMAIL_SEQUENCE ]</button>
         <button class="s-tab" role="tab" aria-selected="false"
-          onclick="showTab('Linkedin', this)">💼 LinkedIn</button>
+          onclick="showTab('Linkedin', this)">[ 02_LINKEDIN_NETWORK ]</button>
         <button class="s-tab" role="tab" aria-selected="false"
-          onclick="showTab('Objections', this)">🛡 Objections</button>
+          onclick="showTab('Objections', this)">[ 03_THREAT_OBJECTIONS ]</button>
       </div>
 
-      <!-- Panel: Emails -->
       <div id="tabEmails" class="tab-panel" role="tabpanel">
         <div class="s-timeline" id="emailTimeline" aria-label="Email sequence timeline"></div>
         <button class="s-btn-export" onclick="exportAll()" aria-label="Copy full sequence as plain text">
-          📋 Copy Full Sequence as Plain Text
+          [ COPY FULL SEQUENCE RAW ]
         </button>
       </div>
 
-      <!-- Panel: LinkedIn -->
       <div id="tabLinkedin" class="tab-panel hidden" role="tabpanel">
         <div class="s-li-grid" id="linkedinOutput"></div>
       </div>
 
-      <!-- Panel: Objections -->
       <div id="tabObjections" class="tab-panel hidden" role="tabpanel">
         <div class="s-obj-list" id="objectionsOutput"></div>
       </div>
 
-    </div><!-- /outputSection -->
+    </div></main>
 
-  </main>
-
-  <!-- Scripts — order matters: prompts → api → parser → ui -->
   <script src="prompts.js"></script>
   <script src="api.js"></script>
   <script src="parser.js"></script>
