@@ -89,8 +89,29 @@ async function generateAll() {
     // GENERATE LINKEDIN 
     if (runLinkedIn) {
       updateProgress('Building LinkedIn network strategy…', (done / totalSteps) * 100);
-      const liRaw = await callGemini(buildLinkedInPrompt(config), apiKey);
-      renderLinkedInOutput(parseLinkedInOutput(liRaw));
+      
+      const liPrompt = buildLinkedInPrompt(config);
+      const liRaw = await callGemini(liPrompt, apiKey);
+      
+      // 1. Clean markdown formatting
+      let cleanJson = liRaw.replace(/```json/gi, '').replace(/```/g, '').trim();
+      
+      // 2. Safety Net: Extract only the JSON object, ignoring any conversational filler Gemini might have added
+      const jsonMatch = cleanJson.match(/\{[\s\S]*\}/);
+      if (!jsonMatch) throw new Error("Failed to extract JSON object from LinkedIn response.");
+      cleanJson = jsonMatch[0];
+      
+      // 3. Parse and Map natively (Bypassing parser.js completely)
+      const parsedLi = JSON.parse(cleanJson);
+      
+      renderLinkedInOutput({
+        connectionRequest: parsedLi.connection_request || parsedLi.CONNECTION_REQUEST,
+        dm1: parsedLi.dm_1 || parsedLi.FOLLOW_UP_DM_1,
+        dm2: parsedLi.dm_2 || parsedLi.FOLLOW_UP_DM_2,
+        voicemail: parsedLi.voicemail_script || parsedLi.VOICEMAIL_SCRIPT,
+        whyItWorks: parsedLi.why_it_works || parsedLi.WHY_THIS_SEQUENCE_WORKS
+      });
+      
       done++;
       if (done < totalSteps) await sleep(2000);
     }
