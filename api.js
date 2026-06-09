@@ -1,20 +1,17 @@
-const GROQ_MODEL    = 'llama-3.3-70b-versatile';
-const GROQ_ENDPOINT = 'https://api.groq.com/openai/v1/chat/completions';
+const GEMINI_MODEL    = 'gemini-2.5-pro';
+const GEMINI_ENDPOINT = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent`;
 
-// CORE API CALL 
-async function callGroq(prompt, apiKey) {
-  const res = await fetch(GROQ_ENDPOINT, {
+async function callGemini(prompt, apiKey) {
+  const res = await fetch(`${GEMINI_ENDPOINT}?key=${apiKey}`, {
     method: 'POST',
-    headers: { 
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${apiKey}` 
-    },
+    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
-      model: GROQ_MODEL,
-      messages: [{ role: "user", content: prompt }],
-      temperature: 0.85,
-      top_p: 0.95,
-      max_completion_tokens: 1300
+      contents: [{ parts: [{ text: prompt }] }],
+      generationConfig: {
+        temperature: 0.85,   // High creativity;
+        topP: 0.95,
+        maxOutputTokens: 1300
+      }
     })
   });
 
@@ -24,75 +21,143 @@ async function callGroq(prompt, apiKey) {
   }
 
   const data = await res.json();
-  const text = data?.choices?.[0]?.message?.content;
-  if (!text) throw new Error('Empty response from Groq. Try again.');
+  const text = data?.candidates?.[0]?.content?.parts?.[0]?.text;
+  if (!text) throw new Error('Empty response from Gemini. Try again.');
   return text;
 }
 
-// MAIN ORCHESTRATOR 
-// Generates all platform outputs in sequence, threading context between emails.
-// Order: emails (sequential) → LinkedIn → objection bank.
+// MAIN ORCHESTRATOR
 async function generateAll() {
   const apiKey = document.getElementById('apiKeyInput').value.trim();
-  if (!apiKey) { alert('Paste your Groq API key in the header first.'); return; }
+  if (!apiKey) { alert('Paste your Gemini API key in the header first.'); return; }
 
   const config = getFormValues();
   if (!config) return;
 
-  const seqLen    = parseInt(config.length);
-  const steps     = EMAIL_SEQUENCE_MAP[seqLen];
-  const totalSteps = seqLen + 2; // emails + LinkedIn + objections
+  // Read toggle states
+  const runEmails = document.getElementById('modEmails').checked;
+  const runLinkedIn = document.getElementById('modLinkedIn').checked;
+  const runObjections = document.getElementById('modObjections').checked;
+  const runSim = document.getElementById('modSimulator').checked;
+  const runReply = document.getElementById('modReply').checked;
 
-  setGenerating(true);
+  if (!runEmails && !runLinkedIn && !runObjections && !runSim && !runReply) {
+    alert('⚠ Please select at least one outcome to generate.');
+    return;
+  }
+
+  // Simulator failsafe: You can't simulate emails if you aren't generating them
+  if (runSim && !runEmails) {
+    alert('⚠ Pre-Flight Simulator requires the 01_EMAILS module to be checked.');
+    return;
+  }
+
+  const seqLen = parseInt(config.length);
+  const steps = typeof EMAIL_SEQUENCE_MAP !== 'undefined' ? EMAIL_SEQUENCE_MAP[seqLen] : [];
+  
+  // Calculate dynamic loading steps
+  let totalSteps = 0;
+  if (runEmails) totalSteps += seqLen;
+  if (runLinkedIn) totalSteps += 1;
+  if (runObjections) totalSteps += 1;
+  if (runSim) totalSteps += 1;
+  if (runReply) totalSteps += 1;
+
+  setGenerating(true, totalSteps);
   clearOutputs();
-  showOutputSection();
+  
+  // show selected tabs immediately
+  if (typeof showOutputSection === 'function') {
+    showOutputSection(runEmails, runLinkedIn, runObjections, runSim, runReply);
+  }
 
   let done = 0;
   let previousSummary = null;
 
   try {
-    // 1. GENERATE EMAILS SEQUENTIALLY 
-    for (const step of steps) {
-      updateProgress(`Writing Email ${step.num} of ${seqLen}: "${step.angle}"…`, (done / totalSteps) * 100);
-
-      const prompt  = buildEmailPrompt(config, step, previousSummary);
-      const raw     = await callGroq(prompt, apiKey);
-      const parsed  = parseEmailOutput(raw, step);
-
-      renderEmailCard(parsed, step);
-
-      // Thread the one-sentence summary into the next email's context block
-      previousSummary = parsed.internalSummary || `Email ${step.num} covered the "${step.angle}" angle.`;
-
-      done++;
-      // 2-second pause between calls — keeps well inside the 30 RPM free tier limit
-      if (done < seqLen) await sleep(2000);
+    // GENERATE EMAILS 
+    if (runEmails) {
+      for (const step of steps) {
+        updateProgress(`Writing Email ${step.num} of ${seqLen}: "${step.angle}"…`, (done / totalSteps) * 100);
+        const prompt = buildEmailPrompt(config, step, previousSummary);
+        const raw = await callGemini(prompt, apiKey);
+        const parsed = parseEmailOutput(raw, step);
+        renderEmailCard(parsed, step);
+        previousSummary = parsed.internalSummary || `Email ${step.num} covered the "${step.angle}" angle.`;
+        
+        done++;
+        if (done < totalSteps) await sleep(2000);
+      }
     }
 
-    // 2. GENERATE LINKEDIN SEQUENCE 
-    updateProgress('Building LinkedIn sequence…', (done / totalSteps) * 100);
-    await sleep(2000);
-    const liRaw    = await callGroq(buildLinkedInPrompt(config), apiKey);
-    renderLinkedInOutput(parseLinkedInOutput(liRaw));
-    done++;
+    // GENERATE LINKEDIN (Strict JSON + Safety Net)
+    if (runLinkedIn) {
+      updateProgress('Building LinkedIn network strategy…', (done / totalSteps) * 100);
+      const liRaw = await callGemini(buildLinkedInPrompt(config), apiKey);
+      renderLinkedInOutput(parseLinkedInOutput(liRaw));
+      
+      done++;
+      if (done < totalSteps) await sleep(2000);
+    }
 
-    // 3. GENERATE OBJECTION BANK 
-    updateProgress('Generating objection bank…', (done / totalSteps) * 100);
-    await sleep(2000);
-    const objRaw   = await callGroq(buildObjectionBankPrompt(config), apiKey);
-    renderObjectionOutput(parseObjectionOutput(objRaw));
-    done++;
+    // [C] GENERATE OBJECTIONS 
+    if (runObjections) {
+      updateProgress('Generating threat objection bank…', (done / totalSteps) * 100);
+      const objRaw = await callGemini(buildObjectionBankPrompt(config), apiKey);
+      renderObjectionOutput(parseObjectionOutput(objRaw));
+      done++;
+      if (done < totalSteps) await sleep(2000);
+    }
 
-    updateProgress('✅ Outreach suite complete!', 100);
+    // [D] RUN PRE-FLIGHT SIMULATOR (Strict JSON + Safety Net)
+    if (runSim) {
+      updateProgress('Running prospect stress-test simulation…', (done / totalSteps) * 100);
+      const emails = Object.values(_store).filter(Boolean);
+      const simPrompt = buildPerformanceSimulatorPrompt(emails, config);
+      const simRaw = await callGemini(simPrompt, apiKey);
+      
+      let cleanSim = simRaw.replace(/```json/gi, '').replace(/```/g, '').trim();
+      const simMatch = cleanSim.match(/\{[\s\S]*\}/);
+      if (!simMatch) throw new Error("Failed to extract JSON object from Simulator response.");
+      
+      const simJson = JSON.parse(simMatch[0]);
+      renderSimulatorOutput(simJson);
+      done++;
+      if (done < totalSteps) await sleep(2000);
+    }
+
+    // [E] RUN MOCK REPLY ANALYSIS (Strict JSON + Safety Net)
+    if (runReply) {
+      updateProgress('Generating Day-0 Mock Reply Playbook…', (done / totalSteps) * 100);
+      const mockReply = `Thanks for reaching out, but we are currently using another vendor for this and aren't looking to switch right now.`;
+      
+      const replyBox = document.getElementById('fieldIncomingReply');
+      if (replyBox) replyBox.value = mockReply;
+
+      const replyPrompt = buildReplyAnalyzerPrompt(mockReply, config);
+      const replyRaw = await callGemini(replyPrompt, apiKey);
+      
+      let cleanRep = replyRaw.replace(/```json/gi, '').replace(/```/g, '').trim();
+      const repMatch = cleanRep.match(/\{[\s\S]*\}/);
+      if (!repMatch) throw new Error("Failed to extract JSON object from Reply response.");
+      
+      const replyJson = JSON.parse(repMatch[0]);
+      renderReplyOutput(replyJson);
+      done++;
+    }
+
+    updateProgress('✅ Full execution complete!', 100);
 
   } catch (err) {
+    // BUG FIX: Alert the user globally so errors never hide in closed tabs
+    alert(`⚠ Execution Failed:\n\n${err.message}`);
     showError(`⚠ ${err.message}`);
   } finally {
     setGenerating(false);
   }
 }
 
-// SINGLE EMAIL REGENERATION 
+// Single email regeneration
 async function regenerateEmail(emailNum, config) {
   const apiKey = document.getElementById('apiKeyInput').value.trim();
   if (!apiKey) { alert('API key required.'); return; }
@@ -101,7 +166,7 @@ async function regenerateEmail(emailNum, config) {
   showEmailLoading(emailNum);
 
   try {
-    const raw    = await callGroq(buildEmailPrompt(config, step, null), apiKey);
+    const raw    = await callGemini(buildEmailPrompt(config, step, null), apiKey);
     const parsed = parseEmailOutput(raw, step);
     renderEmailCard(parsed, step);
   } catch (err) {
@@ -109,7 +174,7 @@ async function regenerateEmail(emailNum, config) {
   }
 }
 
-// HELPERS 
+
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 
 function getFormValues() {
@@ -140,4 +205,77 @@ function setGenerating(on) {
   btn.disabled      = on;
   btn.textContent   = on ? '⏳ Generating…' : '⚡ Generate Full Outreach Suite';
   prog.classList.toggle('hidden', !on);
+}
+
+// SINGLE REPLY ANALYSIS ORCHESTRATOR
+async function analyzeReply() {
+  const apiKey = document.getElementById('apiKeyInput').value.trim();
+  if (!apiKey) { alert('Paste your Gemini API key in the header first.'); return; }
+
+  const incomingReply = document.getElementById('fieldIncomingReply').value.trim();
+  if (!incomingReply) { alert('Please paste an incoming prospect reply first.'); return; }
+
+  const config = getFormValues();
+  if (!config) return;
+
+  const btn = document.getElementById('analyzeReplyBtn');
+  const originalText = btn.textContent;
+  btn.disabled = true;
+  btn.textContent = '[ PROCESSING... ]';
+
+  try {
+    const prompt = buildReplyAnalyzerPrompt(incomingReply, config);
+    const raw = await callGemini(prompt, apiKey);
+    
+    // Clean if LLM wraps the JSON
+    const cleanJson = raw.replace(/```json/gi, '').replace(/```/g, '').trim();
+    const parsedData = JSON.parse(cleanJson);
+    
+    if (typeof renderReplyOutput === 'function') {
+      renderReplyOutput(parsedData);
+    }
+  } catch (err) {
+    alert(`⚠ Reply Analysis failed: ${err.message}`);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = originalText;
+  }
+}
+
+// PRE-FLIGHT SIMULATOR
+async function runSimulator() {
+  const apiKey = document.getElementById('apiKeyInput').value.trim();
+  if (!apiKey) { alert('Paste your Gemini API key in the header first.'); return; }
+
+  const emails = Object.values(_store).filter(Boolean);
+  if (emails.length === 0) { 
+    alert('You must generate an Outreach Suite first before running a simulation.'); 
+    return; 
+  }
+
+  const config = getFormValues();
+  if (!config) return;
+
+  const btn = document.getElementById('runSimBtn');
+  const originalText = btn.textContent;
+  btn.disabled = true;
+  btn.textContent = '[ SIMULATING PROSPECT REACTION... ]';
+
+  try {
+    const prompt = buildPerformanceSimulatorPrompt(emails, config);
+    const raw = await callGemini(prompt, apiKey);
+    
+    const cleanJson = raw.replace(/```json/gi, '').replace(/```/g, '').trim();
+    const parsedData = JSON.parse(cleanJson);
+    
+    // Send to UI renderer
+    if (typeof renderSimulatorOutput === 'function') {
+      renderSimulatorOutput(parsedData);
+    }
+  } catch (err) {
+    alert(`⚠ Simulation failed: ${err.message}`);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = originalText;
+  }
 }
