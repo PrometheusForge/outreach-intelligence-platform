@@ -1,4 +1,3 @@
-// DATA STORE 
 const _store = {};
 
 // HTML ESCAPE 
