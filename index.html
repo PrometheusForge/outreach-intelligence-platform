@@ -90,30 +90,16 @@
         />
       </div>
 
+      <div class="s-field">
+        <label class="s-label" for="fieldLength">SEQUENCE LENGTH</label>
+        <select id="fieldLength" class="s-select">
+          <option value="3">03_EMAILS</option>
+          <option value="4">04_EMAILS</option>
+          <option value="5" selected>05_EMAILS</option>
+        </select>
+      </div>
+      
       <div class="s-row">
-        <div class="s-section-label" style="margin-top: 1rem;">[ TARGET OUTCOMES ]</div>
-        <div style="display: flex; flex-wrap: wrap; gap: 1.5rem; margin-bottom: 2rem;">
-          <label style="display: flex; align-items: center; gap: 0.5rem; color: #fff; font-family: 'Space Grotesk', sans-serif; font-size: 0.85rem; cursor: pointer;">
-            <input type="checkbox" id="modEmails" checked style="accent-color: #4ade80; transform: scale(1.2);" /> 
-            01_EMAILS
-          </label>
-          <label style="display: flex; align-items: center; gap: 0.5rem; color: #fff; font-family: 'Space Grotesk', sans-serif; font-size: 0.85rem; cursor: pointer;">
-            <input type="checkbox" id="modLinkedIn" checked style="accent-color: #4ade80; transform: scale(1.2);" /> 
-            02_LINKEDIN
-          </label>
-          <label style="display: flex; align-items: center; gap: 0.5rem; color: #fff; font-family: 'Space Grotesk', sans-serif; font-size: 0.85rem; cursor: pointer;">
-            <input type="checkbox" id="modObjections" checked style="accent-color: #4ade80; transform: scale(1.2);" /> 
-            03_OBJECTIONS
-          </label>
-          <label style="display: flex; align-items: center; gap: 0.5rem; color: #fff; font-family: 'Space Grotesk', sans-serif; font-size: 0.85rem; cursor: pointer;">
-            <input type="checkbox" id="modSimulator" checked style="accent-color: #4f46e5; transform: scale(1.2);" /> 
-            04_PRE_FLIGHT_SIM
-          </label>
-          <label style="display: flex; align-items: center; gap: 0.5rem; color: #fff; font-family: 'Space Grotesk', sans-serif; font-size: 0.85rem; cursor: pointer;">
-            <input type="checkbox" id="modReply" checked style="accent-color: #4f46e5; transform: scale(1.2);" /> 
-            05_MOCK_REPLY_ANALYSIS
-          </label>
-        </div>
         <div class="s-field">
           <label class="s-label" for="fieldTone">OUTPUT TONE</label>
           <select id="fieldTone" class="s-select">
@@ -126,8 +112,8 @@
         </div>
       </div>
 
-      <div class="s-section-label" style="margin-top: 1rem;">[ TARGET MODULES ]</div>
-      <div class="s-row" style="margin-bottom: 2rem; gap: 1.5rem;">
+     <div class="s-section-label" style="margin-top: 1rem;">[ TARGET OUTCOMES ]</div>
+      <div style="display: flex; flex-wrap: wrap; gap: 1.5rem; margin-bottom: 2rem;">
         <label style="display: flex; align-items: center; gap: 0.5rem; color: #fff; font-family: 'Space Grotesk', sans-serif; font-size: 0.85rem; cursor: pointer;">
           <input type="checkbox" id="modEmails" checked style="accent-color: #4ade80; transform: scale(1.2);" /> 
           01_EMAILS
@@ -139,6 +125,14 @@
         <label style="display: flex; align-items: center; gap: 0.5rem; color: #fff; font-family: 'Space Grotesk', sans-serif; font-size: 0.85rem; cursor: pointer;">
           <input type="checkbox" id="modObjections" checked style="accent-color: #4ade80; transform: scale(1.2);" /> 
           03_OBJECTIONS
+        </label>
+        <label style="display: flex; align-items: center; gap: 0.5rem; color: #fff; font-family: 'Space Grotesk', sans-serif; font-size: 0.85rem; cursor: pointer;">
+          <input type="checkbox" id="modSimulator" checked style="accent-color: #4f46e5; transform: scale(1.2);" /> 
+          04_PRE_FLIGHT_SIM
+        </label>
+        <label style="display: flex; align-items: center; gap: 0.5rem; color: #fff; font-family: 'Space Grotesk', sans-serif; font-size: 0.85rem; cursor: pointer;">
+          <input type="checkbox" id="modReply" checked style="accent-color: #4f46e5; transform: scale(1.2);" /> 
+          05_MOCK_REPLY_ANALYSIS
         </label>
       </div>
       
