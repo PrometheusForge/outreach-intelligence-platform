@@ -139,3 +139,39 @@ function setGenerating(on) {
   btn.textContent   = on ? '⏳ Generating…' : '⚡ Generate Full Outreach Suite';
   prog.classList.toggle('hidden', !on);
 }
+
+// SINGLE REPLY ANALYSIS ORCHESTRATOR
+async function analyzeReply() {
+  const apiKey = document.getElementById('apiKeyInput').value.trim();
+  if (!apiKey) { alert('Paste your Gemini API key in the header first.'); return; }
+
+  const incomingReply = document.getElementById('fieldIncomingReply').value.trim();
+  if (!incomingReply) { alert('Please paste an incoming prospect reply first.'); return; }
+
+  const config = getFormValues(); // Reuses your existing helper
+  if (!config) return;
+
+  const btn = document.getElementById('analyzeReplyBtn');
+  const originalText = btn.textContent;
+  btn.disabled = true;
+  btn.textContent = '[ PROCESSING... ]';
+
+  try {
+    // buildReplyAnalyzerPrompt comes from prompts.js
+    const prompt = buildReplyAnalyzerPrompt(incomingReply, config);
+    const raw = await callGemini(prompt, apiKey);
+    
+    // Clean markdown if the LLM wraps the JSON
+    const cleanJson = raw.replace(/```json/gi, '').replace(/```/g, '').trim();
+    const parsedData = JSON.parse(cleanJson);
+    
+    if (typeof renderReplyOutput === 'function') {
+      renderReplyOutput(parsedData);
+    }
+  } catch (err) {
+    alert(`⚠ Reply Analysis failed: ${err.message}`);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = originalText;
+  }
+}
