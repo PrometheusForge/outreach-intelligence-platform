@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Signal — Outreach Intelligence</title>
+  <title>Signal Outreach Intelligence</title>
 
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -137,6 +137,8 @@
           onclick="showTab('Objections', this)">[ 03_THREAT_OBJECTIONS ]</button>
         <button class="s-tab" role="tab" aria-selected="false"
           onclick="showTab('Reply', this)">[ 04_REPLY_ANALYZER ]</button>
+        <button class="s-tab" role="tab" aria-selected="false"
+          onclick="showTab('Simulator', this)">[ 05_PRE_FLIGHT_SIM ]</button>
       </div>
 
       <div id="tabEmails" class="tab-panel" role="tabpanel">
@@ -207,6 +209,31 @@
           </div>
         </div>
       </div>
+
+      <div id="tabSimulator" class="tab-panel hidden" role="tabpanel">
+        
+        <button id="runSimBtn" class="s-btn-gen" onclick="runSimulator()" style="margin-bottom: 2rem;">
+          EXECUTE // RUN PRE-FLIGHT SIMULATION
+        </button>
+
+        <div id="simOutputContainer" class="hidden">
+          
+          <div style="border: 1px solid #444; padding: 1.5rem; background: #0a0a0a; border-radius: 4px; margin-bottom: 2rem; text-align: center;">
+            <div style="font-family: 'Space Mono', monospace; font-size: 1rem; color: #888;">OVERALL SEQUENCE SURVIVAL RATE</div>
+            <div id="outSimScore" style="font-size: 3rem; font-weight: bold; color: #fff; margin: 0.5rem 0;">--/100</div>
+            <div id="outSimVerdict" style="font-family: 'Space Grotesk', sans-serif; color: #ccc;">...</div>
+          </div>
+
+          <div class="s-section-label">[ CRITICAL STRUCTURAL FIXES ]</div>
+          <ul id="outSimImprovements" style="color: #fff; font-family: 'Space Grotesk', sans-serif; margin-bottom: 2.5rem; padding-left: 1.5rem; line-height: 1.6;">
+            </ul>
+
+          <div class="s-section-label">[ EMAIL-BY-EMAIL TELEMETRY ]</div>
+          <div id="outSimCardsContainer" style="display: flex; flex-direction: column; gap: 1.5rem;"></div>
+
+        </div>
+      </div>
+      
     </div></main>
 
   <script src="prompts.js"></script>
