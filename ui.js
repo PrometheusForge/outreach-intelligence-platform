@@ -1,5 +1,4 @@
 // DATA STORE 
-// Keyed by email number. Avoids escaping content in onclick attributes.
 const _store = {};
 
 // HTML ESCAPE 
@@ -42,7 +41,7 @@ function showTab(name, btn) {
 // PROGRESS DOTS 
 function buildProgressDots() {
   const seqLen = parseInt(document.getElementById('fieldLength').value) || 5;
-  const total  = seqLen + 2; // emails + linkedin + objections
+  const total  = seqLen + 2; 
   const wrap   = document.getElementById('progressDots');
   wrap.innerHTML = '';
   for (let i = 0; i < total; i++) {
@@ -74,7 +73,7 @@ function setGenerating(on) {
   const prog = document.getElementById('progressContainer');
 
   btn.disabled    = on;
-  btn.textContent = on ? '⏳ Generating…' : '⚡ Generate Full Outreach Suite';
+  btn.textContent = on ? '[ PROCESSING... ]' : 'EXECUTE // OUTREACH SUITE';
 
   if (on) {
     buildProgressDots();
@@ -107,7 +106,7 @@ function showEmailLoading(num) {
   if (body && body.classList.contains('open')) {
     const inner = body.querySelector('.s-ecard-inner');
     if (inner) inner.innerHTML =
-      '<p style="font-family:var(--f-mono);font-size:11px;color:var(--text-lo);padding:4px 0">Regenerating…</p>';
+      '<p style="font-family:var(--f-mono);font-size:11px;color:var(--text-lo);padding:4px 0">[ REGENERATING BLOCK... ]</p>';
   }
 }
 
@@ -115,7 +114,6 @@ function showEmailLoading(num) {
 function renderEmailCard(data, step) {
   _store[step.num] = data;
 
-  // Build the entry node without any inline event handlers
   const entry = document.createElement('div');
   entry.className = 's-entry';
 
@@ -126,8 +124,6 @@ function renderEmailCard(data, step) {
     </div>
 
     <div class="s-ecard" id="ec${step.num}">
-
-      <!--  Header (toggle)  -->
       <div class="s-ecard-head" role="button"
            aria-expanded="false" aria-controls="ebody${step.num}"
            id="ehead${step.num}">
@@ -137,76 +133,69 @@ function renderEmailCard(data, step) {
           <div class="s-ecard-subj" title="${esc(data.subject)}">${esc(data.subject)}</div>
         </div>
         <div class="s-ecard-acts">
-          <button class="s-btn-regen" title="Regenerate this email" aria-label="Regenerate email ${step.num}">↺</button>
+          <button class="s-btn-regen" title="Regenerate this email" aria-label="Regenerate email ${step.num}">[ REGEN ]</button>
           <span class="s-caret" id="caret${step.num}" aria-hidden="true">▾</span>
         </div>
       </div>
 
-      <!--  Body (collapsible)  -->
       <div class="s-ecard-body" id="ebody${step.num}" role="region" aria-labelledby="ehead${step.num}">
         <div class="s-ecard-inner">
 
-          <!-- Subject -->
           <div class="s-block-row">
             <div class="s-block">
-              <span class="s-block-key">Subject</span>
+              <span class="s-block-key">SUBJECT</span>
               <div class="s-block-val subj">${esc(data.subject)}</div>
               <div class="s-block-val preview">Preview: ${esc(data.previewText)}</div>
             </div>
-            <button class="s-btn-copy" data-field="subject" aria-label="Copy subject line">copy</button>
+            <button class="s-btn-copy" data-field="subject" aria-label="Copy subject line">COPY</button>
           </div>
 
-          <!-- Body -->
           <div class="s-block-row">
             <div class="s-block" style="flex:1;min-width:0">
-              <span class="s-block-key">Body</span>
+              <span class="s-block-key">BODY</span>
               <div class="s-block-val body-copy">${esc(data.body)}</div>
             </div>
-            <button class="s-btn-copy" data-field="body" aria-label="Copy email body">copy</button>
+            <button class="s-btn-copy" data-field="body" aria-label="Copy email body">COPY</button>
           </div>
 
-          <!-- CTA -->
           <div class="s-cta">
             <div class="s-cta-inner">
-              <div class="s-cta-lbl">Call to Action</div>
+              <div class="s-cta-lbl">CALL TO ACTION</div>
               <div class="s-cta-text">${esc(data.cta)}</div>
             </div>
-            <button class="s-btn-copy" data-field="cta" aria-label="Copy call to action">copy</button>
+            <button class="s-btn-copy" data-field="cta" aria-label="Copy call to action">COPY</button>
           </div>
 
-          <!-- Send time -->
-          <div class="s-send-time">📅 ${esc(data.bestSendTime)}</div>
+          <div class="s-send-time">TIME: ${esc(data.bestSendTime)}</div>
 
-          <!-- A/B Variants (expandable) -->
           <div class="s-expand-wrap">
             <button class="s-expand-hd" id="abhd${step.num}" aria-expanded="false"
                     aria-controls="ab${step.num}">
-              <span class="arr" aria-hidden="true">▶</span> A/B Subject Variants
+              <span class="arr" aria-hidden="true">▶</span> A/B SUBJECT VARIANTS
             </button>
             <div class="s-expand-body" id="ab${step.num}" role="region">
               <div class="s-ab-row">
-                <span class="s-ab-ltr">A</span>
+                <span class="s-ab-ltr">A_</span>
                 <span class="s-ab-txt">${esc(data.variantA)}</span>
-                <button class="s-btn-copy" data-field="variantA" aria-label="Copy variant A">copy</button>
+                <button class="s-btn-copy" data-field="variantA" aria-label="Copy variant A">COPY</button>
               </div>
               <div class="s-ab-row">
-                <span class="s-ab-ltr">B</span>
+                <span class="s-ab-ltr">B_</span>
                 <span class="s-ab-txt">${esc(data.variantB)}</span>
-                <button class="s-btn-copy" data-field="variantB" aria-label="Copy variant B">copy</button>
+                <button class="s-btn-copy" data-field="variantB" aria-label="Copy variant B">COPY</button>
               </div>
               <div class="s-ab-row">
-                <span class="s-ab-ltr">C</span>
+                <span class="s-ab-ltr">C_</span>
                 <span class="s-ab-txt">${esc(data.variantC)}</span>
-                <button class="s-btn-copy" data-field="variantC" aria-label="Copy variant C">copy</button>
+                <button class="s-btn-copy" data-field="variantC" aria-label="Copy variant C">COPY</button>
               </div>
             </div>
           </div>
 
-          <!-- Why It Works (expandable) -->
           <div class="s-expand-wrap">
             <button class="s-expand-hd" id="whyhd${step.num}" aria-expanded="false"
                     aria-controls="why${step.num}">
-              <span class="arr" aria-hidden="true">▶</span> Why It Works
+              <span class="arr" aria-hidden="true">▶</span> EXECUTION LOGIC
             </button>
             <div class="s-expand-body" id="why${step.num}" role="region">
               <div class="s-why">${esc(data.whyItWorks)}</div>
@@ -217,17 +206,12 @@ function renderEmailCard(data, step) {
       </div>
     </div>`;
 
-  // Wire interactions via closures (safe — no escaping needed) 
-
-  // Header toggle
   const head = entry.querySelector('.s-ecard-head');
   head.addEventListener('click', () => _toggleCard(step.num));
 
-  // Regen button
   const regenBtn = entry.querySelector('.s-btn-regen');
   regenBtn.addEventListener('click', e => { e.stopPropagation(); regenEmail(step.num); });
 
-  // Copy buttons — look up value from _store at click time
   entry.querySelectorAll('[data-field]').forEach(btn => {
     const field = btn.dataset.field;
     btn.addEventListener('click', e => {
@@ -236,13 +220,11 @@ function renderEmailCard(data, step) {
     });
   });
 
-  // Expand toggles
   entry.querySelector('#abhd' + step.num).addEventListener('click', () =>
     _toggleExpand('ab' + step.num, 'abhd' + step.num));
   entry.querySelector('#whyhd' + step.num).addEventListener('click', () =>
     _toggleExpand('why' + step.num, 'whyhd' + step.num));
 
-  // Append or replace
   const tl  = document.getElementById('emailTimeline');
   const old = document.getElementById('ec' + step.num);
   if (old) {
@@ -252,7 +234,6 @@ function renderEmailCard(data, step) {
     tl.appendChild(entry);
   }
 
-  // Auto-open first card
   if (step.num === 1) _toggleCard(1);
 }
 
@@ -281,13 +262,12 @@ function renderLinkedInOutput(d) {
   if (!container) return;
 
   const sections = [
-    { title: '🤝 Connection Request',        key: 'connectionRequest', delay: '0.04s' },
-    { title: '💬 Follow-Up DM 1 — Day 2',   key: 'dm1',               delay: '0.12s' },
-    { title: '📩 Follow-Up DM 2 — Day 7',   key: 'dm2',               delay: '0.20s' },
-    { title: '📞 Voicemail Script',          key: 'voicemail',         delay: '0.28s' },
+    { title: '[ REQ ] CONNECTION REQUEST',    key: 'connectionRequest', delay: '0.04s' },
+    { title: '[ DM1 ] FOLLOW-UP — DAY 2',     key: 'dm1',               delay: '0.12s' },
+    { title: '[ DM2 ] FOLLOW-UP — DAY 7',     key: 'dm2',               delay: '0.20s' },
+    { title: '[ VML ] VOICEMAIL SCRIPT',      key: 'voicemail',         delay: '0.28s' },
   ];
 
-  // Build cards
   container.innerHTML = sections.map(s => `
     <div class="s-li-card" style="animation-delay:${s.delay}">
       <div class="s-li-head">
@@ -301,20 +281,19 @@ function renderLinkedInOutput(d) {
     container.innerHTML += `
       <div class="s-li-card" style="animation-delay:0.36s">
         <div class="s-li-head">
-          <span class="s-li-title" style="font-style:italic;color:var(--text-mid)">Why This Sequence Works</span>
+          <span class="s-li-title" style="color:var(--text-mid)">[ EXECUTION LOGIC ]</span>
         </div>
-        <div class="s-li-body" style="font-style:italic">${esc(d.whyItWorks)}</div>
+        <div class="s-li-body" style="font-family:var(--f-mono);font-size:13px">${esc(d.whyItWorks)}</div>
       </div>`;
   }
 
-  // Wire copy buttons after rendering (values from d object via closure)
   const cards = container.querySelectorAll('.s-li-card');
   sections.forEach((s, i) => {
     if (!cards[i]) return;
     const val     = d[s.key] || '';
     const copyBtn = document.createElement('button');
     copyBtn.className    = 's-btn-copy';
-    copyBtn.textContent  = 'copy';
+    copyBtn.textContent  = 'COPY';
     copyBtn.setAttribute('aria-label', 'Copy ' + s.title);
     copyBtn.addEventListener('click', () => copyText(val, copyBtn));
     cards[i].querySelector('.s-li-head').appendChild(copyBtn);
@@ -328,14 +307,14 @@ function renderObjectionOutput(d) {
 
   container.innerHTML = d.objections.map((o, i) => `
     <div class="s-obj-card" style="animation-delay:${(i * 0.08).toFixed(2)}s">
-      <span class="s-obj-n">Objection ${i + 1}</span>
+      <span class="s-obj-n">OBJECTION_${i + 1}</span>
       <div class="s-obj-lbl">${esc(o.label)}</div>
       <div class="s-obj-resp">
-        <span class="s-obj-resp-key">Your Response</span>
+        <span class="s-obj-resp-key">RESPONSE VECTOR</span>
         <p class="s-obj-resp-val">${esc(o.response)}</p>
       </div>
       <div class="s-obj-bridge">
-        <div class="s-obj-bridge-key">Bridge Question</div>
+        <div class="s-obj-bridge-key">BRIDGE PIVOT</div>
         <div class="s-obj-bridge-val">${esc(o.bridge)}</div>
       </div>
     </div>
@@ -344,12 +323,11 @@ function renderObjectionOutput(d) {
   if (d.philosophy) {
     container.innerHTML += `
       <div class="s-philosophy">
-        <div class="s-philosophy-key">The Philosophy</div>
+        <div class="s-philosophy-key">CORE PHILOSOPHY</div>
         <p class="s-philosophy-val">${esc(d.philosophy)}</p>
       </div>`;
   }
 
-  // Wire copy buttons on response blocks
   const cards = container.querySelectorAll('.s-obj-card');
   d.objections.forEach((o, i) => {
     const card = cards[i];
@@ -357,8 +335,8 @@ function renderObjectionOutput(d) {
     const resp    = card.querySelector('.s-obj-resp');
     const copyBtn = document.createElement('button');
     copyBtn.className   = 's-btn-copy';
-    copyBtn.textContent = 'copy response';
-    copyBtn.style.marginTop   = '6px';
+    copyBtn.textContent = 'COPY RESPONSE';
+    copyBtn.style.marginTop   = '12px';
     copyBtn.style.alignSelf   = 'flex-start';
     copyBtn.setAttribute('aria-label', 'Copy response to objection ' + (i + 1));
     const respText = o.response;
@@ -370,7 +348,7 @@ function renderObjectionOutput(d) {
 // EXPORT ALL 
 function exportAll() {
   const emails = Object.values(_store).filter(Boolean);
-  if (!emails.length) { alert('Generate a sequence first.'); return; }
+  if (!emails.length) { alert('Generate sequence first.'); return; }
 
   let out = `SIGNAL — OUTREACH SUITE EXPORT\nGenerated: ${new Date().toLocaleDateString()}\n${''.repeat(52)}\n\n`;
 
@@ -391,17 +369,17 @@ function copyText(text, btn) {
     .then(() => {
       if (btn) {
         const prev = btn.textContent;
-        btn.textContent = '✓ done';
+        btn.textContent = '[ OK ]';
         btn.classList.add('ok');
         setTimeout(() => {
           btn.textContent = prev;
           btn.classList.remove('ok');
         }, 1800);
       } else {
-        _toast('✓ Copied to clipboard');
+        _toast('[ SYS: COPIED TO CLIPBOARD ]');
       }
     })
-    .catch(() => _toast('Copy failed — please select manually'));
+    .catch(() => _toast('[ ERR: COPY FAILED ]'));
 }
 
 function _toast(msg) {
