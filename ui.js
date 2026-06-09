@@ -91,23 +91,29 @@ function clearOutputs() {
   Object.keys(_store).forEach(k => delete _store[k]);
 }
 
-function showOutputSection(runEmails = true, runLinkedIn = true, runObjections = true) {
+function showOutputSection(runEmails, runLinkedIn, runObjections, runSim, runReply) {
   const out = document.getElementById('outputSection');
   if (out) out.classList.remove('hidden');
   
   const tabE = document.querySelector('.s-tab[onclick*="Emails"]');
   const tabL = document.querySelector('.s-tab[onclick*="Linkedin"]');
   const tabO = document.querySelector('.s-tab[onclick*="Objections"]');
+  const tabS = document.querySelector('.s-tab[onclick*="Simulator"]');
+  const tabR = document.querySelector('.s-tab[onclick*="Reply"]');
 
-  // Hide/Show tabs based on what was generated
+  // Display only the checked tabs
   if (tabE) tabE.style.display = runEmails ? 'inline-block' : 'none';
   if (tabL) tabL.style.display = runLinkedIn ? 'inline-block' : 'none';
   if (tabO) tabO.style.display = runObjections ? 'inline-block' : 'none';
+  if (tabS) tabS.style.display = runSim ? 'inline-block' : 'none';
+  if (tabR) tabR.style.display = runReply ? 'inline-block' : 'none';
 
-  // Automatically open the first generated tab
-  if (runEmails) { showTab('Emails', tabE); }
-  else if (runLinkedIn) { showTab('Linkedin', tabL); }
-  else if (runObjections) { showTab('Objections', tabO); }
+  // Auto-focus the first selected tab in order of priority
+  if (runEmails) showTab('Emails', tabE);
+  else if (runLinkedIn) showTab('Linkedin', tabL);
+  else if (runObjections) showTab('Objections', tabO);
+  else if (runSim) showTab('Simulator', tabS);
+  else if (runReply) showTab('Reply', tabR);
 }
 
 function showError(msg) {
