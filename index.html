@@ -135,6 +135,8 @@
           onclick="showTab('Linkedin', this)">[ 02_LINKEDIN_NETWORK ]</button>
         <button class="s-tab" role="tab" aria-selected="false"
           onclick="showTab('Objections', this)">[ 03_THREAT_OBJECTIONS ]</button>
+        <button class="s-tab" role="tab" aria-selected="false"
+          onclick="showTab('Reply', this)">[ 04_REPLY_ANALYZER ]</button>
       </div>
 
       <div id="tabEmails" class="tab-panel" role="tabpanel">
@@ -152,6 +154,59 @@
         <div class="s-obj-list" id="objectionsOutput"></div>
       </div>
 
+      <div id="tabReply" class="tab-panel hidden" role="tabpanel">
+        
+        <div class="s-field">
+          <label class="s-label" for="fieldIncomingReply">INCOMING PROSPECT REPLY</label>
+          <textarea
+            id="fieldIncomingReply"
+            class="s-textarea"
+            rows="4"
+            placeholder="Paste the exact prospect email or LinkedIn message here..."
+          ></textarea>
+        </div>
+
+        <button
+          id="analyzeReplyBtn"
+          class="s-btn-gen"
+          onclick="analyzeReply()"
+          aria-label="Analyze incoming reply"
+          style="margin-bottom: 2rem;"
+        >EXECUTE // ANALYZE REPLY</button>
+
+        <div id="replyOutputContainer" class="hidden">
+          <div class="s-section-label" style="margin-top: 1rem;">[ ANALYSIS TELEMETRY ]</div>
+          
+          <div style="border: 1px solid #444; padding: 1.5rem; background: #0a0a0a; border-radius: 4px;">
+            
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+              <span id="outReplyCategory" style="font-family: 'Space Mono', monospace; font-size: 1.1rem; font-weight: bold; color: #fff;">[ CATEGORY ]</span>
+              <span id="outReplyTempBadge" style="padding: 0.3rem 0.6rem; border-radius: 3px; font-family: 'Space Mono', monospace; font-size: 0.85rem; font-weight: bold; color: #000; background-color: #888;">
+                FROZEN
+              </span>
+            </div>
+
+            <p style="margin-bottom: 1.5rem; font-family: 'Space Grotesk', sans-serif; color: #aaa;">
+              <strong>Reasoning:</strong> <span id="outReplyReasoning">...</span>
+            </p>
+
+            <div class="s-field">
+              <label class="s-label">RECOMMENDED RESPONSE (READY TO SEND)</label>
+              <textarea id="outReplyRecommended" class="s-textarea" rows="3" readonly style="border-color: #555; color: #fff;"></textarea>
+            </div>
+
+            <div class="s-divider" style="margin: 1.5rem 0; border-bottom: 1px dashed #333;"></div>
+
+            <p style="margin-bottom: 0.5rem; font-family: 'Space Grotesk', sans-serif; color: #ccc;">
+              <strong>Next Action Protocol:</strong> <span id="outReplyNextAction">...</span>
+            </p>
+            <p style="font-family: 'Space Grotesk', sans-serif; color: #ccc;">
+              <strong>SDR Coaching Note:</strong> <span id="outReplyCoaching">...</span>
+            </p>
+
+          </div>
+        </div>
+      </div>
     </div></main>
 
   <script src="prompts.js"></script>
