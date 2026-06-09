@@ -1,18 +1,20 @@
-const GEMINI_MODEL    = 'gemini-2.5-flash';
-const GEMINI_ENDPOINT = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent`;
+const GROQ_MODEL    = 'llama-3.3-70b-versatile';
+const GROQ_ENDPOINT = 'https://api.groq.com/openai/v1/chat/completions';
 
 // CORE API CALL 
-async function callGemini(prompt, apiKey) {
-  const res = await fetch(`${GEMINI_ENDPOINT}?key=${apiKey}`, {
+async function callGroq(prompt, apiKey) {
+  const res = await fetch(GROQ_ENDPOINT, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${apiKey}` 
+    },
     body: JSON.stringify({
-      contents: [{ parts: [{ text: prompt }] }],
-      generationConfig: {
-        temperature: 0.85,   // High creativity; adjust down to 0.6 for more conservative output
-        topP: 0.95,
-        maxOutputTokens: 1300
-      }
+      model: GROQ_MODEL,
+      messages: [{ role: "user", content: prompt }],
+      temperature: 0.85,
+      top_p: 0.95,
+      max_completion_tokens: 1300
     })
   });
 
@@ -22,8 +24,8 @@ async function callGemini(prompt, apiKey) {
   }
 
   const data = await res.json();
-  const text = data?.candidates?.[0]?.content?.parts?.[0]?.text;
-  if (!text) throw new Error('Empty response from Gemini. Try again.');
+  const text = data?.choices?.[0]?.message?.content;
+  if (!text) throw new Error('Empty response from Groq. Try again.');
   return text;
 }
 
@@ -32,7 +34,7 @@ async function callGemini(prompt, apiKey) {
 // Order: emails (sequential) → LinkedIn → objection bank.
 async function generateAll() {
   const apiKey = document.getElementById('apiKeyInput').value.trim();
-  if (!apiKey) { alert('Paste your Gemini API key in the header first.'); return; }
+  if (!apiKey) { alert('Paste your Groq API key in the header first.'); return; }
 
   const config = getFormValues();
   if (!config) return;
@@ -54,7 +56,7 @@ async function generateAll() {
       updateProgress(`Writing Email ${step.num} of ${seqLen}: "${step.angle}"…`, (done / totalSteps) * 100);
 
       const prompt  = buildEmailPrompt(config, step, previousSummary);
-      const raw     = await callGemini(prompt, apiKey);
+      const raw     = await callGroq(prompt, apiKey);
       const parsed  = parseEmailOutput(raw, step);
 
       renderEmailCard(parsed, step);
@@ -63,21 +65,21 @@ async function generateAll() {
       previousSummary = parsed.internalSummary || `Email ${step.num} covered the "${step.angle}" angle.`;
 
       done++;
-      // 2-second pause between calls — keeps well inside the 15 RPM free tier limit
+      // 2-second pause between calls — keeps well inside the 30 RPM free tier limit
       if (done < seqLen) await sleep(2000);
     }
 
     // 2. GENERATE LINKEDIN SEQUENCE 
     updateProgress('Building LinkedIn sequence…', (done / totalSteps) * 100);
     await sleep(2000);
-    const liRaw    = await callGemini(buildLinkedInPrompt(config), apiKey);
+    const liRaw    = await callGroq(buildLinkedInPrompt(config), apiKey);
     renderLinkedInOutput(parseLinkedInOutput(liRaw));
     done++;
 
     // 3. GENERATE OBJECTION BANK 
     updateProgress('Generating objection bank…', (done / totalSteps) * 100);
     await sleep(2000);
-    const objRaw   = await callGemini(buildObjectionBankPrompt(config), apiKey);
+    const objRaw   = await callGroq(buildObjectionBankPrompt(config), apiKey);
     renderObjectionOutput(parseObjectionOutput(objRaw));
     done++;
 
@@ -99,7 +101,7 @@ async function regenerateEmail(emailNum, config) {
   showEmailLoading(emailNum);
 
   try {
-    const raw    = await callGemini(buildEmailPrompt(config, step, null), apiKey);
+    const raw    = await callGroq(buildEmailPrompt(config, step, null), apiKey);
     const parsed = parseEmailOutput(raw, step);
     renderEmailCard(parsed, step);
   } catch (err) {
