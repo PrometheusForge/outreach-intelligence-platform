@@ -184,7 +184,7 @@ body::before {
 .s-main {
   position: relative;
   z-index: 1;
-  max-width: 860px;
+  max-width: 1024px;
   margin: 0 auto;
   padding: 100px 32px 100px;
 }
