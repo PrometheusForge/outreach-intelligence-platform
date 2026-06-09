@@ -35,11 +35,15 @@ function showTab(name, btn) {
   }
 }
 
-// Progress dots
-function buildProgressDots() {
-  const seqLen = parseInt(document.getElementById('fieldLength').value) || 5;
-  const total  = seqLen + 2; 
-  const wrap   = document.getElementById('progressDots');
+// Builds exact number of loading dots based on the modules requested
+function buildProgressDots(total) {
+  // Fallback if not provided
+  if (!total) {
+    const seqLen = parseInt(document.getElementById('fieldLength').value) || 5;
+    total = seqLen + 2; 
+  }
+  
+  const wrap = document.getElementById('progressDots');
   wrap.innerHTML = '';
   for (let i = 0; i < total; i++) {
     const d = document.createElement('span');
@@ -65,7 +69,7 @@ function updateProgress(label, pct) {
 }
 
 // State 
-function setGenerating(on) {
+function setGenerating(on, totalSteps = 0) {
   const btn  = document.getElementById('generateBtn');
   const prog = document.getElementById('progressContainer');
 
@@ -73,7 +77,7 @@ function setGenerating(on) {
   btn.textContent = on ? '[ PROCESSING... ]' : 'EXECUTE // OUTREACH SUITE';
 
   if (on) {
-    buildProgressDots();
+    buildProgressDots(totalSteps);
     prog.classList.add('on');
   } else {
     prog.classList.remove('on');
@@ -87,10 +91,23 @@ function clearOutputs() {
   Object.keys(_store).forEach(k => delete _store[k]);
 }
 
-function showOutputSection() {
+function showOutputSection(runEmails = true, runLinkedIn = true, runObjections = true) {
   const out = document.getElementById('outputSection');
   if (out) out.classList.remove('hidden');
-  showTab('Emails', document.querySelector('.s-tab'));
+  
+  const tabE = document.querySelector('.s-tab[onclick*="Emails"]');
+  const tabL = document.querySelector('.s-tab[onclick*="Linkedin"]');
+  const tabO = document.querySelector('.s-tab[onclick*="Objections"]');
+
+  // Hide/Show tabs based on what was generated
+  if (tabE) tabE.style.display = runEmails ? 'inline-block' : 'none';
+  if (tabL) tabL.style.display = runLinkedIn ? 'inline-block' : 'none';
+  if (tabO) tabO.style.display = runObjections ? 'inline-block' : 'none';
+
+  // Automatically open the first generated tab
+  if (runEmails) { showTab('Emails', tabE); }
+  else if (runLinkedIn) { showTab('Linkedin', tabL); }
+  else if (runObjections) { showTab('Objections', tabO); }
 }
 
 function showError(msg) {
