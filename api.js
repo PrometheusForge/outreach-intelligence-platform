@@ -77,7 +77,7 @@ async function generateAll() {
   let previousSummary = null;
 
   try {
-    // GENERATE EMAILS 
+    // A-GENERATE EMAILS 
     if (runEmails) {
       for (const step of steps) {
         updateProgress(`Writing Email ${step.num} of ${seqLen}: "${step.angle}"…`, (done / totalSteps) * 100);
@@ -92,7 +92,7 @@ async function generateAll() {
       }
     }
 
-    // GENERATE LINKEDIN (Strict JSON + Safety Net)
+    // B-GENERATE LINKEDIN (Strict JSON + Safety Net)
     if (runLinkedIn) {
       updateProgress('Building LinkedIn network strategy…', (done / totalSteps) * 100);
       const liRaw = await callGroq(buildLinkedInPrompt(config), apiKey);
@@ -102,7 +102,7 @@ async function generateAll() {
       if (done < totalSteps) await sleep(2000);
     }
 
-    // [C] GENERATE OBJECTIONS 
+    // C-GENERATE OBJECTIONS 
     if (runObjections) {
       updateProgress('Generating threat objection bank…', (done / totalSteps) * 100);
       const objRaw = await callGroq(buildObjectionBankPrompt(config), apiKey);
@@ -111,7 +111,7 @@ async function generateAll() {
       if (done < totalSteps) await sleep(2000);
     }
 
-    // [D] RUN PRE-FLIGHT SIMULATOR (Strict JSON + Safety Net)
+    // D-RUN PRE-FLIGHT SIMULATOR
     if (runSim) {
       updateProgress('Running prospect stress-test simulation…', (done / totalSteps) * 100);
       const emails = Object.values(_store).filter(Boolean);
@@ -128,7 +128,7 @@ async function generateAll() {
       if (done < totalSteps) await sleep(2000);
     }
 
-    // [E] RUN MOCK REPLY ANALYSIS (Strict JSON + Safety Net)
+    // E-RUN MOCK REPLY ANALYSIS (Strict JSON + Safety Net)
     if (runReply) {
       updateProgress('Generating Day-0 Mock Reply Playbook…', (done / totalSteps) * 100);
       const mockReply = `Thanks for reaching out, but we are currently using another vendor for this and aren't looking to switch right now.`;
@@ -151,7 +151,7 @@ async function generateAll() {
     updateProgress('✅ Full execution complete!', 100);
 
   } catch (err) {
-    // BUG FIX: Alert the user globally so errors never hide in closed tabs
+    // Alert user
     alert(`⚠ Execution Failed:\n\n${err.message}`);
     showError(`⚠ ${err.message}`);
   } finally {
