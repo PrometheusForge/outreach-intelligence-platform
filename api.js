@@ -34,7 +34,7 @@ async function generateAll() {
   const config = getFormValues();
   if (!config) return;
 
-  // 1. Read all 5 toggle states
+  // Read toggle states
   const runEmails = document.getElementById('modEmails').checked;
   const runLinkedIn = document.getElementById('modLinkedIn').checked;
   const runObjections = document.getElementById('modObjections').checked;
@@ -55,7 +55,7 @@ async function generateAll() {
   const seqLen = parseInt(config.length);
   const steps = typeof EMAIL_SEQUENCE_MAP !== 'undefined' ? EMAIL_SEQUENCE_MAP[seqLen] : [];
   
-  // 2. Calculate dynamic loading steps
+  // Calculate dynamic loading steps
   let totalSteps = 0;
   if (runEmails) totalSteps += seqLen;
   if (runLinkedIn) totalSteps += 1;
@@ -66,7 +66,7 @@ async function generateAll() {
   setGenerating(true, totalSteps);
   clearOutputs();
   
-  // Force UI to show the selected tabs immediately
+  // show selected tabs immediately
   if (typeof showOutputSection === 'function') {
     showOutputSection(runEmails, runLinkedIn, runObjections, runSim, runReply);
   }
@@ -75,7 +75,7 @@ async function generateAll() {
   let previousSummary = null;
 
   try {
-    // [A] GENERATE EMAILS 
+    // GENERATE EMAILS 
     if (runEmails) {
       for (const step of steps) {
         updateProgress(`Writing Email ${step.num} of ${seqLen}: "${step.angle}"…`, (done / totalSteps) * 100);
@@ -90,34 +90,11 @@ async function generateAll() {
       }
     }
 
-    // [B] GENERATE LINKEDIN (Strict JSON + Safety Net)
+    // GENERATE LINKEDIN (Strict JSON + Safety Net)
     if (runLinkedIn) {
       updateProgress('Building LinkedIn network strategy…', (done / totalSteps) * 100);
-      const liPrompt = buildLinkedInPrompt(config);
-      const liRaw = await callGemini(liPrompt, apiKey);
-      
-      let cleanJson = liRaw.replace(/```json/gi, '').replace(/```/g, '').trim();
-      
-      // Look for the first opening bracket and last closing bracket
-      const startIndex = cleanJson.indexOf('{');
-      const endIndex = cleanJson.lastIndexOf('}');
-      
-      // DIAGNOSTIC NET: If there are no brackets, show us EXACTLY what the AI wrote
-      if (startIndex === -1 || endIndex === -1) {
-        console.error("[SYS: RAW AI OUTPUT]", liRaw);
-        throw new Error(`The AI ignored the JSON formatting rules. It outputted this instead:\n\n"${liRaw}"`);
-      }
-      
-      cleanJson = cleanJson.substring(startIndex, endIndex + 1);
-      
-      const parsedLi = JSON.parse(cleanJson);
-      renderLinkedInOutput({
-        connectionRequest: parsedLi.connection_request || parsedLi.CONNECTION_REQUEST,
-        dm1: parsedLi.dm_1 || parsedLi.FOLLOW_UP_DM_1,
-        dm2: parsedLi.dm_2 || parsedLi.FOLLOW_UP_DM_2,
-        voicemail: parsedLi.voicemail_script || parsedLi.VOICEMAIL_SCRIPT,
-        whyItWorks: parsedLi.why_it_works || parsedLi.WHY_THIS_SEQUENCE_WORKS
-      });
+      const liRaw = await callGemini(buildLinkedInPrompt(config), apiKey);
+      renderLinkedInOutput(parseLinkedInOutput(liRaw));
       
       done++;
       if (done < totalSteps) await sleep(2000);
