@@ -26,7 +26,7 @@ async function callGemini(prompt, apiKey) {
   return text;
 }
 
-// MAIN ORCHESTRATOR 
+
 async function generateAll() {
   const apiKey = document.getElementById('apiKeyInput').value.trim();
   if (!apiKey) { alert('Paste your Gemini API key in the header first.'); return; }
@@ -34,28 +34,38 @@ async function generateAll() {
   const config = getFormValues();
   if (!config) return;
 
-  // 1. Read toggle states
+  // Read toggle states
   const runEmails = document.getElementById('modEmails').checked;
   const runLinkedIn = document.getElementById('modLinkedIn').checked;
   const runObjections = document.getElementById('modObjections').checked;
+  const runSim = document.getElementById('modSimulator').checked;
+  const runReply = document.getElementById('modReply').checked;
 
-  if (!runEmails && !runLinkedIn && !runObjections) {
-    alert('⚠ Please select at least one module to generate.');
+  if (!runEmails && !runLinkedIn && !runObjections && !runSim && !runReply) {
+    alert('⚠ Please select at least one outcome to generate.');
+    return;
+  }
+
+  // Simulator failsafe: can't simulate emails if they're not generated
+  if (runSim && !runEmails) {
+    alert('⚠ Pre-Flight Simulator requires the 01_EMAILS module to be checked.');
     return;
   }
 
   const seqLen = parseInt(config.length);
-  const steps = typeof EMAIL_SEQUENCE_MAP !== 'undefined' ? EMAIL_SEQUENCE_MAP[seqLen] : []; // Fallback safeguard
+  const steps = typeof EMAIL_SEQUENCE_MAP !== 'undefined' ? EMAIL_SEQUENCE_MAP[seqLen] : [];
   
-  // 2. Calculate dynamic loading steps
+  // loading steps
   let totalSteps = 0;
   if (runEmails) totalSteps += seqLen;
   if (runLinkedIn) totalSteps += 1;
   if (runObjections) totalSteps += 1;
+  if (runSim) totalSteps += 1;
+  if (runReply) totalSteps += 1;
 
   setGenerating(true, totalSteps);
   clearOutputs();
-  showOutputSection(runEmails, runLinkedIn, runObjections);
+  showOutputSection(runEmails, runLinkedIn, runObjections, runSim, runReply);
 
   let done = 0;
   let previousSummary = null;
@@ -65,9 +75,9 @@ async function generateAll() {
     if (runEmails) {
       for (const step of steps) {
         updateProgress(`Writing Email ${step.num} of ${seqLen}: "${step.angle}"…`, (done / totalSteps) * 100);
-        const prompt  = buildEmailPrompt(config, step, previousSummary);
-        const raw     = await callGemini(prompt, apiKey);
-        const parsed  = parseEmailOutput(raw, step);
+        const prompt = buildEmailPrompt(config, step, previousSummary);
+        const raw = await callGemini(prompt, apiKey);
+        const parsed = parseEmailOutput(raw, step);
         renderEmailCard(parsed, step);
         previousSummary = parsed.internalSummary || `Email ${step.num} covered the "${step.angle}" angle.`;
         
@@ -81,21 +91,50 @@ async function generateAll() {
       updateProgress('Building LinkedIn network strategy…', (done / totalSteps) * 100);
       const liRaw = await callGemini(buildLinkedInPrompt(config), apiKey);
       renderLinkedInOutput(parseLinkedInOutput(liRaw));
-      
       done++;
       if (done < totalSteps) await sleep(2000);
     }
 
-    // C. GENERATE OBJECTIONS 
+    // GENERATE OBJECTIONS 
     if (runObjections) {
       updateProgress('Generating threat objection bank…', (done / totalSteps) * 100);
       const objRaw = await callGemini(buildObjectionBankPrompt(config), apiKey);
       renderObjectionOutput(parseObjectionOutput(objRaw));
+      done++;
+      if (done < totalSteps) await sleep(2000);
+    }
+
+    // PRE-FLIGHT SIMULATOR
+    if (runSim) {
+      updateProgress('Running prospect stress-test simulation…', (done / totalSteps) * 100);
+      const emails = Object.values(_store).filter(Boolean);
+      const simPrompt = buildPerformanceSimulatorPrompt(emails, config);
+      const simRaw = await callGemini(simPrompt, apiKey);
+      const simJson = JSON.parse(simRaw.replace(/```json/gi, '').replace(/```/g, '').trim());
+      renderSimulatorOutput(simJson);
+      done++;
+      if (done < totalSteps) await sleep(2000);
+    }
+
+    // MOCK REPLY ANALYSIS
+    if (runReply) {
+      updateProgress('Generating Day-0 Mock Reply Playbook…', (done / totalSteps) * 100);
       
+      //mock incoming reply to demonstrate
+      const mockReply = `Thanks for reaching out, but we are currently using another vendor for this and aren't looking to switch right now.`;
+      
+      // user sees analysis
+      const replyBox = document.getElementById('fieldIncomingReply');
+      if (replyBox) replyBox.value = mockReply;
+
+      const replyPrompt = buildReplyAnalyzerPrompt(mockReply, config);
+      const replyRaw = await callGemini(replyPrompt, apiKey);
+      const replyJson = JSON.parse(replyRaw.replace(/```json/gi, '').replace(/```/g, '').trim());
+      renderReplyOutput(replyJson);
       done++;
     }
 
-    updateProgress('✅ Execution complete!', 100);
+    updateProgress('✅ Full execution complete!', 100);
 
   } catch (err) {
     showError(`⚠ ${err.message}`);
