@@ -266,14 +266,14 @@ async function runSimulator() {
   const btn = document.getElementById('runSimBtn');
   const originalText = btn.textContent;
   btn.disabled = true;
-  btn.textContent = '[ SIMULATING PROSPECT REACTION... ]';
+  btn.textContent = '';
 
   try {
     const prompt = buildPerformanceSimulatorPrompt(emails, config);
+    // Explicitly pass 0.1 and true to force determinism
     const raw = await callGroq(prompt, apiKey, 0.1, true);
     const parsedData = JSON.parse(raw);
     
-    // Send to UI renderer
     if (typeof renderSimulatorOutput === 'function') {
       renderSimulatorOutput(parsedData);
     }
