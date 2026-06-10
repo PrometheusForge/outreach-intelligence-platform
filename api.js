@@ -29,7 +29,7 @@ async function callGroq(prompt, apiKey, temp = 0.85, isJsonMode = false) {
   }
 
   const data = await res.json();
-  const text = data?.choices?.?.message?.content;
+  const text = data?.choices?.[0]?.message?.content;
   
   if (!text) throw new Error('Empty response from Groq.');
   return text;
@@ -204,7 +204,7 @@ function getFormValues() {
 
 function updateProgress(label, pct) {
   document.getElementById('progressLabel').textContent = label;
-  document.getElementById('progressBar').style.width   = `${Math.min(100, Math.round(pct))}%`;
+  document.getElementById('progressDots').style.width   = `${Math.min(100, Math.round(pct))}%`;
 }
 
 function setGenerating(on) {
