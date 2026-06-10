@@ -249,11 +249,12 @@ function buildPerformanceSimulatorPrompt(emails, config) {
   ### SEQUENCE TO EVALUATE
   ${emailBlocks}
   
-  ### SIMULATION GUARDRAILS (RUTHLESS REALISM)
-  1. Target prospects are busy, skeptical, and default to deleting cold emails.
-  2. Penalize emails that are too long, use corporate jargon, or focus too much on "We/I" instead of the prospect's problems.
-  3. The "prospect_monologue" MUST be written in the first-person from the prospect's perspective. It should be blunt, impatient, and realistic (e.g., "Why is this guy pitching me on paragraph one? Delete.").
-  
+  EVALUATION GUARDRAILS (OBJECTIVE SCORING)
+  1. You are an impartial, objective judge. Your job is to strictly apply the rubric.
+  2. Do NOT invent flaws if the email successfully follows B2B best practices.
+  3. Reward emails that include concrete statistics, named social proof, and clear cost-of-inaction metrics. If these elements are present, the score must mathematically increase.
+  4. The "prospect_monologue" MUST be an objective reaction. If the email contains strong proof and clear numbers, the prospect should react with genuine curiosity and a high reply probability.
+    
   ### OUTPUT FORMAT
   You must respond ONLY with a valid JSON object. Do not include markdown code blocks (e.g., \`\`\`json), conversational filler, or explanations outside the JSON. Use this exact schema:
   {
