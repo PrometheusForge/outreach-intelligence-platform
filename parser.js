@@ -14,7 +14,6 @@ function extractField(text, label, nextLabels = []) {
   return text.substring(colonPos, endPos).trim();
 }
 
-// EMAIL PARSER 
 function parseEmailOutput(raw, step) {
   const allFields = [
     'SUBJECT','PREVIEW_TEXT','BODY','CTA','SEND_DAY',
@@ -38,20 +37,27 @@ function parseEmailOutput(raw, step) {
   };
 }
 
-// LINKEDIN PARSER 
 function parseLinkedInOutput(raw) {
-  const fields = ['CONNECTION_REQUEST','FOLLOW_UP_DM_1','FOLLOW_UP_DM_2','VOICEMAIL_SCRIPT','WHY_THIS_SEQUENCE_WORKS'];
-  const get = f => extractField(raw, f, fields);
-  return {
-    connectionRequest: get('CONNECTION_REQUEST'),
-    dm1:               get('FOLLOW_UP_DM_1'),
-    dm2:               get('FOLLOW_UP_DM_2'),
-    voicemail:         get('VOICEMAIL_SCRIPT'),
-    whyItWorks:        get('WHY_THIS_SEQUENCE_WORKS'),
-  };
+  try {
+    const cleanJson = raw.replace(/```json/gi, '').replace(/```/g, '').trim();
+    const data = JSON.parse(cleanJson);
+    
+    return {
+      connectionRequest: data.connection_request || '',
+      dm1:               data.dm_1 || '',
+      dm2:               data.dm_2 || '',
+      voicemail:         data.voicemail_script || '',
+      whyItWorks:        data.why_it_works || ''
+    };
+  } catch (err) {
+    console.error("Failed to parse LinkedIn output:", err);
+    return {
+      connectionRequest: "[ ERROR: Failed to parse JSON response ]",
+      dm1: "", dm2: "", voicemail: "", whyItWorks: ""
+    };
+  }
 }
 
-// OBJECTION PARSER 
 function parseObjectionOutput(raw) {
   const objections = [];
   for (let i = 1; i <= 5; i++) {
