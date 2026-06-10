@@ -25,9 +25,7 @@ async function callGroq(prompt, apiKey, temp = 0.85, isJsonMode = false) {
 
   if (!res.ok) {
     const err = await res.json().catch(() => ({}));
-    throw new Error(err?.error?.message |
-
-| `API error ${res.status}`);
+    throw new Error(err?.error?.message || `API error ${res.status}`);
   }
 
   const data = await res.json();
@@ -234,7 +232,7 @@ async function analyzeReply() {
 
   try {
     const prompt = buildReplyAnalyzerPrompt(incomingReply, config);
-    const raw = await callGroq(prompt, apiKey);
+    const raw = await callGroq(prompt, apiKey, 0.1, true);
     
     // Clean if LLM wraps the JSON
     const cleanJson = raw.replace(/```json/gi, '').replace(/```/g, '').trim();
