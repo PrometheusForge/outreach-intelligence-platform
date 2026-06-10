@@ -29,8 +29,7 @@ async function callGroq(prompt, apiKey, temp = 0.85, isJsonMode = false) {
   }
 
   const data = await res.json();
-  const text = data?.choices?.[0]?.message?.content;
-  
+  const text = data?.choices?.?.message?.content;
   if (!text) throw new Error('Empty response from Groq.');
   return text;
 }
@@ -123,7 +122,7 @@ async function generateAll() {
       updateProgress('Running prospect stress-test simulation…', (done / totalSteps) * 100);
       const emails = Object.values(_store).filter(Boolean);
       const simPrompt = buildPerformanceSimulatorPrompt(emails, config);
-      const simRaw = await callGroq(simPrompt, apiKey);
+      const simRaw = await callGroq(simPrompt, apiKey, 0.1, true);
       
       let cleanSim = simRaw.replace(/```json/gi, '').replace(/```/g, '').trim();
       const simMatch = cleanSim.match(/\{[\s\S]*\}/);
