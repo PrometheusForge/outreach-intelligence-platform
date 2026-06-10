@@ -1,30 +1,38 @@
 const GROQ_MODEL    = 'llama-3.3-70b-versatile';
 const GROQ_ENDPOINT = 'https://api.groq.com/openai/v1/chat/completions';
 
-async function callGroq(prompt, apiKey) {
+async function callGroq(prompt, apiKey, temp = 0.85, isJsonMode = false) {
+  const bodyPayload = {
+    model: GROQ_MODEL,
+    messages: [{ role: 'user', content: prompt }],
+    temperature: temp,
+    top_p: 0.90,
+    max_completion_tokens: 1300
+  };
+  
+  if (isJsonMode) {
+    bodyPayload.response_format = { type: "json_object" };
+  }
+
   const res = await fetch(GROQ_ENDPOINT, {
     method: 'POST',
     headers: { 
       'Content-Type': 'application/json',
       'Authorization': `Bearer ${apiKey}`
     },
-    body: JSON.stringify({
-      model: GROQ_MODEL,
-      messages: [{ role: 'user', content: prompt }],
-      temperature: 0.85,  
-      top_p: 0.95,
-      max_completion_tokens: 1300
-    })
+    body: JSON.stringify(bodyPayload)
   });
 
   if (!res.ok) {
     const err = await res.json().catch(() => ({}));
-    throw new Error(err?.error?.message || `API error ${res.status} — check your API key.`);
+    throw new Error(err?.error?.message |
+
+| `API error ${res.status}`);
   }
 
   const data = await res.json();
-  const text = data?.choices?.[0]?.message?.content;
-  if (!text) throw new Error('Empty response from Groq. Try again.');
+  const text = data?.choices?.?.message?.content;
+  if (!text) throw new Error('Empty response from Groq.');
   return text;
 }
 
@@ -92,7 +100,7 @@ async function generateAll() {
       }
     }
 
-    // B-GENERATE LINKEDIN (Strict JSON + Safety Net)
+    // B-GENERATE LINKEDIN
     if (runLinkedIn) {
       updateProgress('Building LinkedIn network strategy…', (done / totalSteps) * 100);
       const liRaw = await callGroq(buildLinkedInPrompt(config), apiKey);
@@ -111,7 +119,7 @@ async function generateAll() {
       if (done < totalSteps) await sleep(2000);
     }
 
-    // D-RUN PRE-FLIGHT SIMULATOR
+    // D-PRE-FLIGHT SIMULATOR
     if (runSim) {
       updateProgress('Running prospect stress-test simulation…', (done / totalSteps) * 100);
       const emails = Object.values(_store).filter(Boolean);
@@ -128,7 +136,7 @@ async function generateAll() {
       if (done < totalSteps) await sleep(2000);
     }
 
-    // E-RUN MOCK REPLY ANALYSIS (Strict JSON + Safety Net)
+    // E-MOCK REPLY ANALYSIS
     if (runReply) {
       updateProgress('Generating Day-0 Mock Reply Playbook…', (done / totalSteps) * 100);
       const mockReply = `Thanks for reaching out, but we are currently using another vendor for this and aren't looking to switch right now.`;
@@ -264,10 +272,8 @@ async function runSimulator() {
 
   try {
     const prompt = buildPerformanceSimulatorPrompt(emails, config);
-    const raw = await callGroq(prompt, apiKey);
-    
-    const cleanJson = raw.replace(/```json/gi, '').replace(/```/g, '').trim();
-    const parsedData = JSON.parse(cleanJson);
+    const raw = await callGroq(prompt, apiKey, 0.1, true);
+    const parsedData = JSON.parse(raw);
     
     // Send to UI renderer
     if (typeof renderSimulatorOutput === 'function') {
