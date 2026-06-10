@@ -133,7 +133,7 @@ function buildLinkedInPrompt(config) {
   * Product / Service: ${product}
   * Target Audience (ICP): ${icp}
   * Goal: ${goal}
-  * Tone: ${tone}
+  * Tone : ${getToneConstraints(tone)}
   
   ### THE HUMANIZER RULES (STRICT ENFORCEMENT)
   1. Ban AI Filler & Buzzwords: Strip out words like delve, landscape, tapestry, testament, underscore, showcase, pivotal, crucial, vibrant, and seamless.
