@@ -22,74 +22,101 @@ const EMAIL_SEQUENCE_MAP = {
 
 function getSystemPersona() {
   return `You are Marcus Webb, a senior B2B cold email strategist with 15 years of experience 
-running outbound campaigns for SaaS companies, agencies, and consultancies. 
-Your campaigns consistently produce 15-40% reply rates.
-
-Your writing philosophy (non-negotiable):
-— Never sell in the first touch. Earn the right to the conversation.
-— Specificity beats generality. Concrete numbers beat adjectives.
-— One CTA per email. Never two. Never zero.
-— Short is respectful. Long is lazy.
-— Every opening line must pass this test: "Would I keep reading if I got this cold?"
-— No "Hope this finds you well." No "My name is X from Y." No "Just following up."
-
-CRITICAL FORMATTING RULE: Output ONLY the structured format requested. 
-No preamble. No closing remarks. No Markdown decorators. No apologies. 
-Just the clean, labeled, structured output — nothing else.`;
+  running outbound campaigns for SaaS companies, agencies, and consultancies. 
+  Your campaigns consistently produce 15-40% reply rates.
+  
+  Your writing philosophy (non-negotiable):
+  — Never sell in the first touch. Earn the right to the conversation.
+  — Specificity beats generality. Concrete numbers beat adjectives.
+  — One CTA per email. Never two. Never zero.
+  — Short is respectful. Long is lazy.
+  — Every opening line must pass this test: "Would I keep reading if I got this cold?"
+  — No "Hope this finds you well." No "My name is X from Y." No "Just following up."
+  
+  CRITICAL FORMATTING RULE: Output ONLY the structured format requested. 
+  No preamble. No closing remarks. No Markdown decorators. No apologies. 
+  Just the clean, labeled, structured output — nothing else.`;
 }
 
-// Email prompt builder
+function getToneConstraints(toneString) {
+  switch(toneString) {
+    case "Conversational and direct":
+      return 'Use an 8th-grade reading level. Maximum sentence length is 15 words. Forbidden phrases: "I hope this finds you well", "I wanted to reach out".';
+    case "Data-driven and analytical":
+      return 'Structure all arguments around measurable ROI. Use If/Then conditional logic. Do not use hyperbole or emotional adjectives.';
+    case "Formal and professional":
+      return 'Utilize precise industry terminology. Maintain an objective, respectful psychological distance. Do not use colloquialisms or contractions.';
+    default:
+      return toneString;
+  }
+}
+
 function buildEmailPrompt(config, emailStep, previousSummary = null) {
   const { product, icp, goal, tone, length } = config;
   const { num, day, angle, technique } = emailStep;
 
   const contextBlock = previousSummary
     ? `PREVIOUS EMAIL CONTEXT (for narrative continuity):
-"${previousSummary}"
-INSTRUCTIONS: This email must logically follow and escalate from the previous one.
-Do NOT reuse the same opening structure, hook angle, or CTA phrasing from email ${num - 1}.`
-    : `INSTRUCTIONS: This is Email 1. There is no prior email.
-The opening line must be immediately specific to the prospect's professional reality.
-Forbidden openers: "I came across your company", "I noticed you", "I wanted to reach out."`;
+  "${previousSummary}"
+  INSTRUCTIONS: This email must logically follow and escalate from the previous one.
+  Do NOT reuse the same opening structure, hook angle, or CTA phrasing from email ${num - 1}.`
+      : `INSTRUCTIONS: This is Email 1. There is no prior email.
+  The opening line must be immediately specific to the prospect's professional reality.
+  Forbidden openers: "I came across your company", "I noticed you", "I wanted to reach out."`;
 
   return `${getSystemPersona()}
 
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-CAMPAIGN BRIEF
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-Product / Service : ${product}
-Ideal Customer Profile : ${icp}
-Campaign Goal : ${goal}
-Tone : ${tone}
-Total sequence length : ${length} emails
-
-${contextBlock}
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-YOUR TASK
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-Write Email #${num} of ${length}.
-Send Day     : Day ${day}
-Angle        : ${angle}
-Technique    : ${technique}
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-MANDATORY OUTPUT — use EXACT labels, in this exact order
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-SUBJECT: [Max 9 words. Creates curiosity. No emojis. No clickbait. No question marks.]
-PREVIEW_TEXT: [35-55 characters. Complements the subject — does NOT repeat it.]
-BODY:
-[Full email body. Rules: 100-160 words. No bullet lists. No subheadings.
-Conversational prose. Opening line cannot start with the word "I".
-Maximum two paragraphs. CTA goes in the final line, not embedded mid-body.]
-CTA: [The exact line the prospect reads asking them to act. Single, specific, low-commitment. Max 20 words.]
-SEND_DAY: Day ${day}
-BEST_SEND_TIME: [Day of week + specific time + one sentence of reasoning]
-WHY_IT_WORKS: [2–3 sentences naming the exact psychological principle or copywriting technique this email uses and why it is effective at this stage of the sequence.]
-INTERNAL_SUMMARY: [Exactly one sentence summarizing what this email communicated and what it asked for — used internally for sequence continuity tracking.]
-VARIANT_SUBJECT_A: [Alternative subject — approaches curiosity from a different angle]
-VARIANT_SUBJECT_B: [Alternative subject — phrased as a question]
-VARIANT_SUBJECT_C: [Alternative subject — ultra-short, 1–4 words maximum]`;
+  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  CAMPAIGN BRIEF
+  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  Product / Service : ${product}
+  Ideal Customer Profile : ${icp}
+  Campaign Goal : ${goal}
+  Tone : ${getToneConstraints(tone)}
+  Total sequence length : ${length} emails
+  
+  ${contextBlock}
+  
+  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  YOUR TASK
+  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  Write Email #${num} of ${length}.
+  Send Day     : Day ${day}
+  Angle        : ${angle}
+  Technique    : ${technique}
+  COPYWRITING CONSTRAINTS:
+  
+  Maximum length: 75 words.
+  
+  Framework: Use CPPC (Context, Problem, Projection, Call to action).
+  
+  SPECIFICITY EXAMPLES (MANDATORY):
+  Do NOT use vague phrases like "Effective practice management is key to success" or "paying for inefficiency." You must invent and include hyper-specific metrics aligned with the product.
+  
+  Example of good statistical hook: "Our software has helped solo attorneys reduce client intake time by 30% and increase billing efficiency by 25%."
+  
+  Example of good Cost of Inaction: "Solo attorneys who don't automate routine tasks can lose up to $10,000 per year in potential revenue."
+  
+  Example of good Social Proof: "Johnson Law Firm was able to increase productivity by 30% and reduce administrative burdens by 25% after implementing our software."
+  How it betters the system: This forces the generator to output the exact style of concrete data (e.g., $10,000, 30% reduction, Johnson Law Firm) that the simulator demanded in your screenshots, ensuring the generator passes the evaluation.
+  
+  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  MANDATORY OUTPUT — use EXACT labels, in this exact order
+  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  SUBJECT: [Max 9 words. Creates curiosity. No emojis. No clickbait. No question marks.]
+  PREVIEW_TEXT: [35-55 characters. Complements the subject — does NOT repeat it.]
+  BODY:
+  [Full email body. Rules: 100-160 words. No bullet lists. No subheadings.
+  Conversational prose. Opening line cannot start with the word "I".
+  Maximum two paragraphs. CTA goes in the final line, not embedded mid-body.]
+  CTA: [The exact line the prospect reads asking them to act. Single, specific, low-commitment. Max 20 words.]
+  SEND_DAY: Day ${day}
+  BEST_SEND_TIME: [Day of week + specific time + one sentence of reasoning]
+  WHY_IT_WORKS: [2–3 sentences naming the exact psychological principle or copywriting technique this email uses and why it is effective at this stage of the sequence.]
+  INTERNAL_SUMMARY: [Exactly one sentence summarizing what this email communicated and what it asked for — used internally for sequence continuity tracking.]
+  VARIANT_SUBJECT_A: [Alternative subject — approaches curiosity from a different angle]
+  VARIANT_SUBJECT_B: [Alternative subject — phrased as a question]
+  VARIANT_SUBJECT_C: [Alternative subject — ultra-short, 1–4 words maximum]`;
 }
 
 function buildLinkedInPrompt(config) {
@@ -128,83 +155,83 @@ function buildLinkedInPrompt(config) {
   }`;
 }
 
-// Generates 5 tailored objection responses, each with a bridge question that keeps the conversation alive without applying pressure.
+// Generates 5 tailored objection responses, each with a bridge question keeping the conversation alive without applying pressure.
 function buildObjectionBankPrompt(config) {
   const { product, icp, goal } = config;
   return `${getSystemPersona()}
 
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-CAMPAIGN BRIEF
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-Product / Service : ${product}
-ICP : ${icp}
-Campaign Goal : ${goal}
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-YOUR TASK: Objection Response Bank
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-Generate professional, conversation-preserving responses to 5 common cold outreach objections.
-Core principle: Never argue. Never defend. Re-engage through curiosity.
-
-MANDATORY FORMAT — repeat exactly for all 5 objections:
-
-OBJECTION_1: "Not interested"
-RESPONSE_1: [2–3 sentences. Acknowledge + pivot to a micro-curiosity question. Do not defend the product.]
-BRIDGE_QUESTION_1: [One question that naturally re-opens dialogue without any pressure]
-
-OBJECTION_2: "Send me some information"
-RESPONSE_2: [2–3 sentences. Reframe the request — ask what's most relevant before sending anything generic.]
-BRIDGE_QUESTION_2: [One qualifying question that makes a follow-up more targeted]
-
-OBJECTION_3: "We already have a solution"
-RESPONSE_3: [2–3 sentences. Validate their choice + open a gap question around what they wish worked better.]
-BRIDGE_QUESTION_3: [One gap question focused on what their current solution cannot do]
-
-OBJECTION_4: "You should speak to someone else"
-RESPONSE_4: [2–3 sentences. Ask for the referral gracefully + give them a reason to make the introduction.]
-BRIDGE_QUESTION_4: [One question that makes the referral easy to execute]
-
-OBJECTION_5: "Reach out again in a few months"
-RESPONSE_5: [2–3 sentences. Confirm a specific future date + give one reason to stay on their radar now.]
-BRIDGE_QUESTION_5: [One question or micro-action that creates continuity before the conversation goes dormant]
-
-OBJECTION_PHILOSOPHY: [3–4 sentences on the psychological framework behind conversation-preserving 
-  objection handling and why curiosity-based responses outperform defensive responses in B2B outreach.]`;
+  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  CAMPAIGN BRIEF
+  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  Product / Service : ${product}
+  ICP : ${icp}
+  Campaign Goal : ${goal}
+  
+  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  YOUR TASK: Objection Response Bank
+  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  Generate professional, conversation-preserving responses to 5 common cold outreach objections.
+  Core principle: Never argue. Never defend. Re-engage through curiosity.
+  
+  MANDATORY FORMAT — repeat exactly for all 5 objections:
+  
+  OBJECTION_1: "Not interested"
+  RESPONSE_1: [2–3 sentences. Acknowledge + pivot to a micro-curiosity question. Do not defend the product.]
+  BRIDGE_QUESTION_1: [One question that naturally re-opens dialogue without any pressure]
+  
+  OBJECTION_2: "Send me some information"
+  RESPONSE_2: [2–3 sentences. Reframe the request — ask what's most relevant before sending anything generic.]
+  BRIDGE_QUESTION_2: [One qualifying question that makes a follow-up more targeted]
+  
+  OBJECTION_3: "We already have a solution"
+  RESPONSE_3: [2–3 sentences. Validate their choice + open a gap question around what they wish worked better.]
+  BRIDGE_QUESTION_3: [One gap question focused on what their current solution cannot do]
+  
+  OBJECTION_4: "You should speak to someone else"
+  RESPONSE_4: [2–3 sentences. Ask for the referral gracefully + give them a reason to make the introduction.]
+  BRIDGE_QUESTION_4: [One question that makes the referral easy to execute]
+  
+  OBJECTION_5: "Reach out again in a few months"
+  RESPONSE_5: [2–3 sentences. Confirm a specific future date + give one reason to stay on their radar now.]
+  BRIDGE_QUESTION_5: [One question or micro-action that creates continuity before the conversation goes dormant]
+  
+  OBJECTION_PHILOSOPHY: [3–4 sentences on the psychological framework behind conversation-preserving 
+    objection handling and why curiosity-based responses outperform defensive responses in B2B outreach.]`;
 }
 
 // Handle responses
 function buildReplyAnalyzerPrompt(incomingReply, config) {
   return `You are an elite B2B Sales Development Manager and conversation strategist. Your goal is to analyze an incoming reply from a prospect and coach an SDR on exactly how to respond.
 
-### CAMPAIGN CONTEXT
-* Product/Service: ${config.product}
-* Target ICP: ${config.icp}
-* Ultimate Goal: ${config.goal}
-
-### INCOMING PROSPECT REPLY
-"${incomingReply}"
-
-### INSTRUCTIONS & GUARDRAILS
-1. Analyze the prospect's reply to determine their underlying mindset, objections, and intent.
-2. Draft a highly conversational, empathetic, and concise response (Maximum 3 sentences).
-3. STRICT COPYWRITING RULES for the 'recommended_response':
-   - DO NOT use greetings like "Hi [Name]" or "Dear [Name]" (the UI will handle this).
-   - DO NOT use filler phrases like "I hope this helps" or "I understand."
-   - If the reply is a Soft Objection, validate it directly before pivoting.
-   - If the reply is a Hard No, be gracious, do not push back, and leave the door open.
-   - Keep the reading level at an 8th-grade standard. Mimic human text messaging energy.
-
-### OUTPUT FORMAT
-You must respond ONLY with a valid JSON object. Do not include markdown code blocks (e.g., \`\`\`json), conversational filler, or explanations outside the JSON. Use this exact schema:
-
-{
-  "reply_category": "Select one: Positive/Interested | Soft Objection | Hard No | Timing Delay | Wrong Person | Info Request | Ghost/Auto-Reply",
-  "temperature": "Select one: Hot | Warm | Cold | Frozen",
-  "temperature_reason": "One concise sentence explaining why you assigned this temperature.",
-  "recommended_response": "The 2-3 sentence drafted reply following the strict copywriting rules.",
-  "next_action_plan": "Specific next step and timing (e.g., 'Send response today, if no reply in 3 days, call them' or 'Close out sequence, set CRM reminder for 6 months').",
-  "coaching_note": "1-2 sentences explaining the psychology behind the prospect's reply and why the recommended response is designed the way it is."
-}`;
+  ### CAMPAIGN CONTEXT
+  * Product/Service: ${config.product}
+  * Target ICP: ${config.icp}
+  * Ultimate Goal: ${config.goal}
+  
+  ### INCOMING PROSPECT REPLY
+  "${incomingReply}"
+  
+  ### INSTRUCTIONS & GUARDRAILS
+  1. Analyze the prospect's reply to determine their underlying mindset, objections, and intent.
+  2. Draft a highly conversational, empathetic, and concise response (Maximum 3 sentences).
+  3. STRICT COPYWRITING RULES for the 'recommended_response':
+     - DO NOT use greetings like "Hi [Name]" or "Dear [Name]" (the UI will handle this).
+     - DO NOT use filler phrases like "I hope this helps" or "I understand."
+     - If the reply is a Soft Objection, validate it directly before pivoting.
+     - If the reply is a Hard No, be gracious, do not push back, and leave the door open.
+     - Keep the reading level at an 8th-grade standard. Mimic human text messaging energy.
+  
+  ### OUTPUT FORMAT
+  You must respond ONLY with a valid JSON object. Do not include markdown code blocks (e.g., \`\`\`json), conversational filler, or explanations outside the JSON. Use this exact schema:
+  
+  {
+    "reply_category": "Select one: Positive/Interested | Soft Objection | Hard No | Timing Delay | Wrong Person | Info Request | Ghost/Auto-Reply",
+    "temperature": "Select one: Hot | Warm | Cold | Frozen",
+    "temperature_reason": "One concise sentence explaining why you assigned this temperature.",
+    "recommended_response": "The 2-3 sentence drafted reply following the strict copywriting rules.",
+    "next_action_plan": "Specific next step and timing (e.g., 'Send response today, if no reply in 3 days, call them' or 'Close out sequence, set CRM reminder for 6 months').",
+    "coaching_note": "1-2 sentences explaining the psychology behind the prospect's reply and why the recommended response is designed the way it is."
+  }`;
 }
 
 //
@@ -215,42 +242,42 @@ function buildPerformanceSimulatorPrompt(emails, config) {
 
   return `You are an elite B2B Sales Enablement Director running a "Pre-Flight Stress Test" on a cold outbound sequence. Your job is to simulate exactly how the target prospect will react to these emails, and then coach the SDR on how to improve them.
 
-### CAMPAIGN CONTEXT
-* Product/Service being pitched: ${config.product}
-* Target Prospect (ICP): ${config.icp}
+  ### CAMPAIGN CONTEXT
+  * Product/Service being pitched: ${config.product}
+  * Target Prospect (ICP): ${config.icp}
+  
+  ### SEQUENCE TO EVALUATE
+  ${emailBlocks}
+  
+  ### SIMULATION GUARDRAILS (RUTHLESS REALISM)
+  1. Target prospects are busy, skeptical, and default to deleting cold emails.
+  2. Penalize emails that are too long, use corporate jargon, or focus too much on "We/I" instead of the prospect's problems.
+  3. The "prospect_monologue" MUST be written in the first-person from the prospect's perspective. It should be blunt, impatient, and realistic (e.g., "Why is this guy pitching me on paragraph one? Delete.").
+  
+  ### OUTPUT FORMAT
+  You must respond ONLY with a valid JSON object. Do not include markdown code blocks (e.g., \`\`\`json), conversational filler, or explanations outside the JSON. Use this exact schema:
+  {
+    "email_simulations": [
+      {
+        "step_number": "<Number of the email>",
+        "open_likelihood": "High | Medium | Low",
+        "reply_probability": "High | Medium | Low",
+        "prospect_monologue": "2-3 sentences in the first-person of the prospect reacting live.",
+        "rubric_evaluation": {
+          "specificity": "0-10 score: Are there concrete numbers (e.g., 30% reduction) or vague adjectives?",
+          "social_proof": "0-10 score: Is there a named case study?",
+          "cost_of_inaction": "0-10 score: Is there a quantified loss?"
+        },
+        "weakest_element": "Identify the specific line that hurts the email most.",
+        "fix_suggestion": "Provide a concrete rewrite."
+      }
+    ],
+    "top_improvements": ["Most impactful change 1", "Most impactful change 2"],
+    "overall_verdict": "One sentence summarizing the sequence's core strength or fatal flaw.",
+    "overall_score": "<Number 0-100 calculated ONLY after assessing the rubric_evaluation above>"
+  }
 
-### SEQUENCE TO EVALUATE
-${emailBlocks}
-
-### SIMULATION GUARDRAILS (RUTHLESS REALISM)
-1. Target prospects are busy, skeptical, and default to deleting cold emails.
-2. Penalize emails that are too long, use corporate jargon, or focus too much on "We/I" instead of the prospect's problems.
-3. The "prospect_monologue" MUST be written in the first-person from the prospect's perspective. It should be blunt, impatient, and realistic (e.g., "Why is this guy pitching me on paragraph one? Delete.").
-
-### OUTPUT FORMAT
-You must respond ONLY with a valid JSON object. Do not include markdown code blocks (e.g., \`\`\`json), conversational filler, or explanations outside the JSON. Use this exact schema:
-
-{
-  "overall_score": <Number 0-100 representing the sequence's real-world survival rate>,
-  "overall_verdict": "One sentence summarizing the sequence's core strength or fatal flaw.",
-  "top_improvements": [
-    "Most impactful structural or psychological change across the sequence",
-    "Second most impactful change",
-    "Third most impactful change"
-  ],
-  "email_simulations": [
-    {
-      "step_number": <Number of the email>,
-      "open_likelihood": "High | Medium | Low",
-      "open_reasoning": "One concise sentence explaining the open likelihood based on the subject line.",
-      "reply_probability": "High | Medium | Low",
-      "reply_reasoning": "One concise sentence explaining the reply probability.",
-      "prospect_monologue": "2-3 sentences in the first-person of the prospect reacting live as they skim the email.",
-      "weakest_element": "Identify the specific line, word, or structural choice that hurts the email most.",
-      "fix_suggestion": "Provide a concrete rewrite or specific instruction to fix the weakest element."
-    }
-  ]
-}`;
+`;
 }
 
 // Pre-filled ICP data.
