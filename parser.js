@@ -5,7 +5,7 @@
 // Finds the text value after a given LABEL: marker,
 // stopping when the next known label begins.
 function extractField(text, label, nextLabels = []) {
-  const pattern   = new RegExp(`${label.replace(/[_]/g, '[_]')}:\\s*`, 'im');
+  const pattern = new RegExp('^\\s*(?:\\*\\*|###\\s*)?' + label.replace(/[_]/g, '[_]') + '(?:\\*\\*)?:\\s*', 'im');
   const matchIdx  = text.search(pattern);
   if (matchIdx === -1) return '';
 
