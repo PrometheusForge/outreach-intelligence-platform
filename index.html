@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Signal — Outreach Intelligence</title>
+  <title>Signal Outreach Intelligence</title>
 
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -25,7 +25,7 @@
         id="apiKeyInput"
         type="password"
         class="s-api-input"
-        placeholder="ENTER GEMINI API KEY..."
+        placeholder="ENTER GROQ API KEY..."
         autocomplete="off"
         oninput="onApiKeyInput(this.value)"
       />
@@ -35,7 +35,7 @@
         target="_blank"
         rel="noopener noreferrer"
         class="s-api-link"
-        aria-label="Get a free Gemini API key"
+        aria-label="Get a free Groq API key"
       >[ GET KEY ↗ ]</a>
     </div>
   </header>
@@ -89,7 +89,7 @@
           aria-required="true"
         />
       </div>
-
+      
       <div class="s-row">
         <div class="s-field">
           <label class="s-label" for="fieldLength">SEQUENCE LENGTH</label>
@@ -99,6 +99,7 @@
             <option value="5" selected>05_EMAILS</option>
           </select>
         </div>
+        
         <div class="s-field">
           <label class="s-label" for="fieldTone">OUTPUT TONE</label>
           <select id="fieldTone" class="s-select">
@@ -111,6 +112,30 @@
         </div>
       </div>
 
+     <div class="s-section-label" style="margin-top: 1rem;">[ TARGET OUTCOMES ]</div>
+      <div style="display: flex; flex-wrap: wrap; gap: 1.5rem; margin-bottom: 2rem;">
+        <label style="display: flex; align-items: center; gap: 0.5rem; color: #fff; font-family: 'Space Grotesk', sans-serif; font-size: 0.85rem; cursor: pointer;">
+          <input type="checkbox" id="modEmails" checked style="accent-color: #4ade80; transform: scale(1.2);" /> 
+          01_EMAILS
+        </label>
+        <label style="display: flex; align-items: center; gap: 0.5rem; color: #fff; font-family: 'Space Grotesk', sans-serif; font-size: 0.85rem; cursor: pointer;">
+          <input type="checkbox" id="modLinkedIn" style="accent-color: #4ade80; transform: scale(1.2);" /> 
+          02_LINKEDIN
+        </label>
+        <label style="display: flex; align-items: center; gap: 0.5rem; color: #fff; font-family: 'Space Grotesk', sans-serif; font-size: 0.85rem; cursor: pointer;">
+          <input type="checkbox" id="modObjections" style="accent-color: #4ade80; transform: scale(1.2);" /> 
+          03_OBJECTIONS
+        </label>
+        <label style="display: flex; align-items: center; gap: 0.5rem; color: #fff; font-family: 'Space Grotesk', sans-serif; font-size: 0.85rem; cursor: pointer;">
+          <input type="checkbox" id="modSimulator" style="accent-color: #4f46e5; transform: scale(1.2);" /> 
+          04_PRE_FLIGHT_SIM
+        </label>
+        <label style="display: flex; align-items: center; gap: 0.5rem; color: #fff; font-family: 'Space Grotesk', sans-serif; font-size: 0.85rem; cursor: pointer;">
+          <input type="checkbox" id="modReply" style="accent-color: #4f46e5; transform: scale(1.2);" /> 
+          05_MOCK_REPLY_ANALYSIS
+        </label>
+      </div>
+      
       <button
         id="generateBtn"
         class="s-btn-gen"
@@ -135,6 +160,10 @@
           onclick="showTab('Linkedin', this)">[ 02_LINKEDIN_NETWORK ]</button>
         <button class="s-tab" role="tab" aria-selected="false"
           onclick="showTab('Objections', this)">[ 03_THREAT_OBJECTIONS ]</button>
+        <button class="s-tab" role="tab" aria-selected="false"
+          onclick="showTab('Simulator', this)">[ 04_PRE_FLIGHT_SIM ]</button>
+        <button class="s-tab" role="tab" aria-selected="false"
+          onclick="showTab('Reply', this)">[ 05_REPLY_ANALYZER ]</button>
       </div>
 
       <div id="tabEmails" class="tab-panel" role="tabpanel">
@@ -152,6 +181,84 @@
         <div class="s-obj-list" id="objectionsOutput"></div>
       </div>
 
+      <div id="tabReply" class="tab-panel hidden" role="tabpanel">
+        
+        <div class="s-field">
+          <label class="s-label" for="fieldIncomingReply">INCOMING PROSPECT REPLY</label>
+          <textarea
+            id="fieldIncomingReply"
+            class="s-textarea"
+            rows="4"
+            placeholder="Paste the exact prospect email or LinkedIn message here..."
+          ></textarea>
+        </div>
+
+        <button
+          id="analyzeReplyBtn"
+          class="s-btn-gen"
+          onclick="analyzeReply()"
+          aria-label="Analyze incoming reply"
+          style="margin-bottom: 2rem;"
+        >EXECUTE // ANALYZE REPLY</button>
+
+        <div id="replyOutputContainer" class="hidden">
+          <div class="s-section-label" style="margin-top: 1rem;">[ ANALYSIS TELEMETRY ]</div>
+          
+          <div style="border: 1px solid #444; padding: 1.5rem; background: #0a0a0a; border-radius: 4px;">
+            
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+              <span id="outReplyCategory" style="font-family: 'Space Mono', monospace; font-size: 1.1rem; font-weight: bold; color: #fff;">[ CATEGORY ]</span>
+              <span id="outReplyTempBadge" style="padding: 0.3rem 0.6rem; border-radius: 3px; font-family: 'Space Mono', monospace; font-size: 0.85rem; font-weight: bold; color: #000; background-color: #888;">
+                FROZEN
+              </span>
+            </div>
+
+            <p style="margin-bottom: 1.5rem; font-family: 'Space Grotesk', sans-serif; color: #aaa;">
+              <strong>Reasoning:</strong> <span id="outReplyReasoning">...</span>
+            </p>
+
+            <div class="s-field">
+              <label class="s-label">RECOMMENDED RESPONSE (READY TO SEND)</label>
+              <textarea id="outReplyRecommended" class="s-textarea" rows="3" readonly style="border-color: #555; color: #fff;"></textarea>
+            </div>
+
+            <div class="s-divider" style="margin: 1.5rem 0; border-bottom: 1px dashed #333;"></div>
+
+            <p style="margin-bottom: 0.5rem; font-family: 'Space Grotesk', sans-serif; color: #ccc;">
+              <strong>Next Action Protocol:</strong> <span id="outReplyNextAction">...</span>
+            </p>
+            <p style="font-family: 'Space Grotesk', sans-serif; color: #ccc;">
+              <strong>SDR Coaching Note:</strong> <span id="outReplyCoaching">...</span>
+            </p>
+
+          </div>
+        </div>
+      </div>
+
+      <div id="tabSimulator" class="tab-panel hidden" role="tabpanel">
+        
+        <button id="runSimBtn" class="s-btn-gen" onclick="runSimulator()" style="margin-bottom: 2rem;">
+          EXECUTE // RUN PRE-FLIGHT SIMULATION
+        </button>
+
+        <div id="simOutputContainer" class="hidden">
+          
+          <div style="border: 1px solid #444; padding: 1.5rem; background: #0a0a0a; border-radius: 4px; margin-bottom: 2rem; text-align: center;">
+            <div style="font-family: 'Space Mono', monospace; font-size: 1rem; color: #888;">OVERALL SEQUENCE SURVIVAL RATE</div>
+            <div id="outSimScore" style="font-size: 3rem; font-weight: bold; color: #fff; margin: 0.5rem 0;">--/100</div>
+            <div id="outSimVerdict" style="font-family: 'Space Grotesk', sans-serif; color: #ccc;">...</div>
+          </div>
+
+          <div class="s-section-label">[ CRITICAL STRUCTURAL FIXES ]</div>
+          <ul id="outSimImprovements" style="color: #fff; font-family: 'Space Grotesk', sans-serif; margin-bottom: 2.5rem; padding-left: 1.5rem; line-height: 1.6;">
+            </ul>
+
+          <div class="s-section-label">[ EMAIL-BY-EMAIL TELEMETRY ]</div>
+          <div id="outSimCardsContainer" style="display: flex; flex-direction: column; gap: 1.5rem;"></div>
+
+        </div>
+      </div>
+      
     </div></main>
 
   <script src="prompts.js"></script>

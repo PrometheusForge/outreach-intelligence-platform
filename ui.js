@@ -9,13 +9,11 @@ function esc(s) {
     .replace(/"/g, '&quot;');
 }
 
-// API KEY BADGE 
 function onApiKeyInput(val) {
   const badge = document.getElementById('apiBadge');
   badge.classList.toggle('on', val.length > 10);
 }
 
-// TEMPLATE PILLS 
 function pickTemplate(btn, key) {
   document.querySelectorAll('.s-pill').forEach(p => p.classList.remove('selected'));
   btn.classList.add('selected');
@@ -37,11 +35,15 @@ function showTab(name, btn) {
   }
 }
 
-// PROGRESS DOTS 
-function buildProgressDots() {
-  const seqLen = parseInt(document.getElementById('fieldLength').value) || 5;
-  const total  = seqLen + 2; 
-  const wrap   = document.getElementById('progressDots');
+// Builds exact number of loading dots based on the modules requested
+function buildProgressDots(total) {
+  // Fallback if not provided
+  if (!total) {
+    const seqLen = parseInt(document.getElementById('fieldLength').value) || 5;
+    total = seqLen + 2; 
+  }
+  
+  const wrap = document.getElementById('progressDots');
   wrap.innerHTML = '';
   for (let i = 0; i < total; i++) {
     const d = document.createElement('span');
@@ -66,8 +68,8 @@ function updateProgress(label, pct) {
   });
 }
 
-// GENERATE STATE 
-function setGenerating(on) {
+// State 
+function setGenerating(on, totalSteps = 0) {
   const btn  = document.getElementById('generateBtn');
   const prog = document.getElementById('progressContainer');
 
@@ -75,24 +77,43 @@ function setGenerating(on) {
   btn.textContent = on ? '[ PROCESSING... ]' : 'EXECUTE // OUTREACH SUITE';
 
   if (on) {
-    buildProgressDots();
+    buildProgressDots(totalSteps);
     prog.classList.add('on');
   } else {
     prog.classList.remove('on');
   }
 }
 
-// CLEAR & SHOW 
+// clear & show
 function clearOutputs() {
   ['emailTimeline', 'linkedinOutput', 'objectionsOutput']
     .forEach(id => { const el = document.getElementById(id); if (el) el.innerHTML = ''; });
   Object.keys(_store).forEach(k => delete _store[k]);
 }
 
-function showOutputSection() {
+function showOutputSection(runEmails, runLinkedIn, runObjections, runSim, runReply) {
   const out = document.getElementById('outputSection');
   if (out) out.classList.remove('hidden');
-  showTab('Emails', document.querySelector('.s-tab'));
+  
+  const tabE = document.querySelector('.s-tab[onclick*="email" i]');
+  const tabL = document.querySelector('.s-tab[onclick*="linkedin" i]');
+  const tabO = document.querySelector('.s-tab[onclick*="objection" i]');
+  const tabS = document.querySelector('.s-tab[onclick*="simulator" i]');
+  const tabR = document.querySelector('.s-tab[onclick*="reply" i]');
+
+  // Force hide/show based strictly on checkbox state
+  if (tabE) tabE.style.display = runEmails ? 'inline-block' : 'none';
+  if (tabL) tabL.style.display = runLinkedIn ? 'inline-block' : 'none';
+  if (tabO) tabO.style.display = runObjections ? 'inline-block' : 'none';
+  if (tabS) tabS.style.display = runSim ? 'inline-block' : 'none';
+  if (tabR) tabR.style.display = runReply ? 'inline-block' : 'none';
+
+  // Auto-focus the first selected tab in logical order
+  if (runEmails && tabE) showTab('Emails', tabE);
+  else if (runLinkedIn && tabL) showTab('Linkedin', tabL);
+  else if (runObjections && tabO) showTab('Objections', tabO);
+  else if (runSim && tabS) showTab('Simulator', tabS);
+  else if (runReply && tabR) showTab('Reply', tabR);
 }
 
 function showError(msg) {
@@ -109,7 +130,7 @@ function showEmailLoading(num) {
   }
 }
 
-// EMAIL CARD 
+// Email card
 function renderEmailCard(data, step) {
   _store[step.num] = data;
 
@@ -255,7 +276,7 @@ function _toggleExpand(contentId, btnId) {
   btn.setAttribute('aria-expanded', isOpen);
 }
 
-// LINKEDIN RENDER 
+// Linkedin render
 function renderLinkedInOutput(d) {
   const container = document.getElementById('linkedinOutput');
   if (!container) return;
@@ -299,7 +320,7 @@ function renderLinkedInOutput(d) {
   });
 }
 
-// OBJECTION BANK RENDER 
+// Objection render
 function renderObjectionOutput(d) {
   const container = document.getElementById('objectionsOutput');
   if (!container) return;
@@ -344,7 +365,7 @@ function renderObjectionOutput(d) {
   });
 }
 
-// EXPORT ALL 
+// Export all
 function exportAll() {
   const emails = Object.values(_store).filter(Boolean);
   if (!emails.length) { alert('Generate sequence first.'); return; }
@@ -362,7 +383,7 @@ function exportAll() {
   copyText(out);
 }
 
-// COPY UTILITY 
+// Copy utility
 function copyText(text, btn) {
   navigator.clipboard.writeText(text || '')
     .then(() => {
@@ -391,8 +412,95 @@ function _toast(msg) {
   setTimeout(() => el.remove(), 2400);
 }
 
-// REGEN BRIDGE 
+// Regen bridge
 function regenEmail(num) {
   const config = typeof getFormValues === 'function' ? getFormValues() : null;
   if (config && typeof regenerateEmail === 'function') regenerateEmail(num, config);
+}
+
+// Reply Analyzer
+function renderReplyOutput(data) {
+  const container = document.getElementById('replyOutputContainer');
+  if (!container) return;
+  
+  document.getElementById('outReplyCategory').textContent = `[ ${data.reply_category.toUpperCase()} ]`;
+  
+  const badge = document.getElementById('outReplyTempBadge');
+  badge.textContent = data.temperature.toUpperCase();
+  
+  // Apply thermal coloring based on temperature
+  const temp = data.temperature.toLowerCase();
+  if (temp === 'hot') badge.style.backgroundColor = '#4ade80'; // Green
+  else if (temp === 'warm') badge.style.backgroundColor = '#facc15'; // Yellow
+  else if (temp === 'cold') badge.style.backgroundColor = '#9ca3af'; // Gray
+  else badge.style.backgroundColor = '#6b7280'; // Darker gray for frozen
+  
+  document.getElementById('outReplyReasoning').textContent = data.temperature_reason;
+  document.getElementById('outReplyRecommended').value = data.recommended_response;
+  document.getElementById('outReplyNextAction').textContent = data.next_action_plan;
+  document.getElementById('outReplyCoaching').textContent = data.coaching_note;
+  
+  container.classList.remove('hidden');
+}
+
+// Simulator Renderer
+function renderSimulatorOutput(data) {
+  const container = document.getElementById('simOutputContainer');
+  if (!container) return;
+
+  // Header Scores
+  const scoreEl = document.getElementById('outSimScore');
+  scoreEl.textContent = `${data.overall_score}/100`;
+  scoreEl.style.color = data.overall_score > 75 ? '#4ade80' : (data.overall_score > 50 ? '#facc15' : '#f87171');
+  
+  document.getElementById('outSimVerdict').textContent = data.overall_verdict;
+
+  // Top Improvements
+  const impList = document.getElementById('outSimImprovements');
+  impList.innerHTML = data.top_improvements.map(imp => `<li style="margin-bottom: 0.5rem;">${esc(imp)}</li>`).join('');
+
+  // Email Cards with Indigo Blockquotes
+  const cardsContainer = document.getElementById('outSimCardsContainer');
+  
+  // Helper to colorize probability badges
+  const getBadgeColor = (val) => {
+    const v = val.toLowerCase();
+    if (v.includes('high')) return '#4ade80'; // Green
+    if (v.includes('medium')) return '#facc15'; // Yellow
+    return '#f87171'; // Red
+  };
+
+  cardsContainer.innerHTML = data.email_simulations.map(sim => `
+    <div style="border: 1px solid #333; padding: 1.5rem; background: #0a0a0a; border-radius: 4px;">
+      
+      <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #222; padding-bottom: 1rem; margin-bottom: 1rem;">
+        <span style="font-family: 'Space Mono', monospace; font-size: 1.1rem; font-weight: bold; color: #fff;">[ EMAIL ${sim.step_number} ]</span>
+        <div style="display: flex; gap: 1rem;">
+          <div style="font-family: 'Space Mono', monospace; font-size: 0.75rem; display: flex; align-items: center; gap: 0.5rem;">
+            <span style="color: #888;">OPEN:</span>
+            <span style="background: ${getBadgeColor(sim.open_likelihood)}; color: #000; padding: 2px 6px; border-radius: 2px; font-weight: bold;">${sim.open_likelihood.toUpperCase()}</span>
+          </div>
+          <div style="font-family: 'Space Mono', monospace; font-size: 0.75rem; display: flex; align-items: center; gap: 0.5rem;">
+            <span style="color: #888;">REPLY:</span>
+            <span style="background: ${getBadgeColor(sim.reply_probability)}; color: #000; padding: 2px 6px; border-radius: 2px; font-weight: bold;">${sim.reply_probability.toUpperCase()}</span>
+          </div>
+        </div>
+      </div>
+
+      <div style="margin-bottom: 1.5rem;">
+        <span style="font-family: 'Space Mono', monospace; font-size: 0.8rem; color: #888; text-transform: uppercase;">Prospect Inner Monologue:</span>
+        <blockquote style="margin: 0.5rem 0 0 0; padding: 0.75rem 1rem; border-left: 4px solid #4f46e5; background: #111; color: #e5e7eb; font-family: 'Space Grotesk', sans-serif; font-style: italic;">
+          "${esc(sim.prospect_monologue)}"
+        </blockquote>
+      </div>
+
+      <div style="font-family: 'Space Grotesk', sans-serif; color: #ccc; font-size: 0.95rem; line-height: 1.5;">
+        <p style="margin-bottom: 0.5rem;"><strong>Weakest Element:</strong> <span style="color: #f87171;">${esc(sim.weakest_element)}</span></p>
+        <p><strong>Coach's Fix:</strong> <span style="color: #60a5fa;">${esc(sim.fix_suggestion)}</span></p>
+      </div>
+
+    </div>
+  `).join('');
+
+  container.classList.remove('hidden');
 }
