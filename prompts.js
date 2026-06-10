@@ -85,21 +85,22 @@ function buildEmailPrompt(config, emailStep, previousSummary = null) {
   Angle        : ${angle}
   Technique    : ${technique}
   COPYWRITING CONSTRAINTS:
-  
-  Maximum length: 75 words.
-  
-  Framework: Use CPPC (Context, Problem, Projection, Call to action).
+  - Maximum length: 75 words.
+  - Framework: Use CPPC (Context, Problem, Projection, Call to action).
   
   SPECIFICITY EXAMPLES (MANDATORY):
-  Do NOT use vague phrases like "Effective practice management is key to success" or "paying for inefficiency." You must invent and include hyper-specific metrics aligned with the product.
+  - Do NOT use vague phrases like "Effective practice management is key to success" or "paying for inefficiency." You must invent and include hyper-specific metrics aligned with the product.
+  - Example of good statistical hook: "Our software has helped solo attorneys reduce client intake time by 30% and increase billing efficiency by 25%."
+  - Example of good Cost of Inaction: "Solo attorneys who don't automate routine tasks can lose up to $10,000 per year in potential revenue."
+  - Example of good Social Proof: "Johnson Law Firm was able to increase productivity by 30% and reduce administrative burdens by 25% after implementing our software."
+  - How it betters the system: This forces the generator to output the exact style of concrete data (e.g., $10,000, 30% reduction, Johnson Law Firm) that the simulator demanded in your screenshots, ensuring the generator passes the evaluation.
   
-  Example of good statistical hook: "Our software has helped solo attorneys reduce client intake time by 30% and increase billing efficiency by 25%."
-  
-  Example of good Cost of Inaction: "Solo attorneys who don't automate routine tasks can lose up to $10,000 per year in potential revenue."
-  
-  Example of good Social Proof: "Johnson Law Firm was able to increase productivity by 30% and reduce administrative burdens by 25% after implementing our software."
-  How it betters the system: This forces the generator to output the exact style of concrete data (e.g., $10,000, 30% reduction, Johnson Law Firm) that the simulator demanded in your screenshots, ensuring the generator passes the evaluation.
-  
+  FEW-SHOT ANCHOR EXAMPLES (MANDATORY FOR SCORING):
+  You are evaluated on a strict Pass/Fail rubric. You must mimic these exact structures: 
+  - PASSING SPECIFICITY & PROOF: "Our software helped Johnson Law reduce client intake time by 30% and increase billing efficiency by 25%."
+  - PASSING COST OF INACTION: "Solo attorneys missing this automation lose up to $10,000 annually in potential revenue."
+  - FAILING EXAMPLE (DO NOT USE): "We offer effective practice management solutions to streamline your workflows and save time."
+
   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   MANDATORY OUTPUT — use EXACT labels, in this exact order
   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -122,7 +123,6 @@ function buildEmailPrompt(config, emailStep, previousSummary = null) {
 function buildLinkedInPrompt(config) {
   const { product, icp, goal, tone } = config;
   
-  // Failsafe in case getSystemPersona isn't globally available
   const persona = typeof getSystemPersona === 'function' ? getSystemPersona() : 'You are a senior copywriter and sales strategist.';
 
   return `${persona}
@@ -142,6 +142,11 @@ function buildLinkedInPrompt(config) {
   4. Break the Rule of Three: AI forces ideas into threes to sound comprehensive (e.g., "faster, cheaper, and better"). Pick the single strongest point and stop there.
   5. No Fake Pleasantries: Skip "Hope this finds you well" or "I was so impressed by your background." Humans texting peers don't talk like that.
   6. A Real Soft Ask: Asking for a "quick 15-minute sync" is a hard ask. A soft ask checks interest only (e.g., "Open to taking a look?", "Opposed to seeing a short breakdown?").
+
+  FEW-SHOT ANCHOR EXAMPLES (MANDATORY FOR SCORING):
+  - PASSING CONNECTION REQUEST: "Noticed you're scaling the ops team at [Company]. We just helped a similar RevOps group cut manual data entry by 15 hours a week. Open to connecting?"
+  - PASSING DM: "Most ops directors I speak with are losing $5k a month strictly to inefficient routing. Opposed to seeing a short breakdown of how we fix this?"
+  - FAILING EXAMPLE (DO NOT USE): "I hope this finds you well! Our seamless solutions are pivotal for optimizing your digital landscape."
   
   ### OUTPUT FORMAT
   Return pure JSON. No markdown wrappers (like \`\`\`json), no introductory text, and no collaborative filler like "Here is your sequence!". Just the raw object. Use this exact schema:
@@ -265,9 +270,9 @@ function buildPerformanceSimulatorPrompt(emails, config) {
         "reply_probability": "High | Medium | Low",
         "prospect_monologue": "2-3 sentences in the first-person of the prospect reacting live.",
         "rubric_evaluation": {
-          "specificity": "0-10 score: Are there concrete numbers (e.g., 30% reduction) or vague adjectives?",
-          "social_proof": "0-10 score: Is there a named case study?",
-          "cost_of_inaction": "0-10 score: Is there a quantified loss?"
+          "specificity_check": "PASS/FAIL: Does the text contain concrete metrics (e.g., '30%') instead of vague adjectives?",
+          "social_proof_check": "PASS/FAIL: Does the text name a specific verifiable entity (e.g., 'Johnson Law')?",
+          "cost_of_inaction_check": "PASS/FAIL: Is there a quantified loss (e.g., '$10,000')?"
         },
         "weakest_element": "Identify the specific line that hurts the email most.",
         "fix_suggestion": "Provide a concrete rewrite."
@@ -275,10 +280,8 @@ function buildPerformanceSimulatorPrompt(emails, config) {
     ],
     "top_improvements": ["Most impactful change 1", "Most impactful change 2"],
     "overall_verdict": "One sentence summarizing the sequence's core strength or fatal flaw.",
-    "overall_score": "<Number 0-100 calculated ONLY after assessing the rubric_evaluation above>"
-  }
-
-`;
+    "overall_score": "Calculate this strictly based on the rubric_evaluation above. 3 PASSES = 95. 2 PASSES = 70. 1 PASS = 40. 0 PASSES = 10."
+  }`;
 }
 
 // Pre-filled ICP data.
