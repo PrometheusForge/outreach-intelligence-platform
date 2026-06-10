@@ -29,7 +29,7 @@ async function callGroq(prompt, apiKey, temp = 0.85, isJsonMode = false) {
   }
 
   const data = await res.json();
-  const text = data?.choices?.?.message?.content;
+  const text = data?.choices?.[0]?.message?.content;
   if (!text) throw new Error('Empty response from Groq.');
   return text;
 }
