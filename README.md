@@ -1,52 +1,17 @@
-
- ███████╗██╗ ██████╗ ███╗   ██╗ █████╗ ██╗     
- ██╔════╝██║██╔════╝ ████╗  ██║██╔══██╗██║     
- ███████╗██║██║  ███╗██╔██╗ ██║███████║██║     
- ╚════██║██║██║   ██║██║╚██╗██║██╔══██║██║     
- ███████║██║╚██████╔╝██║ ╚████║██║  ██║███████╗
- ╚══════╝╚═╝ ╚═════╝ ╚═╝  ╚═══╝╚═╝  ╚═╝╚══════╝
-                  OUTREACH INTELLIGENCE // v2.0
-
-
-<img width="1910" height="1258" alt="screencapture-prometheusforge-github-io-outreach-intelligence-platform-2026-06-12-03_28_26" src="https://github.com/user-attachments/assets/11e73950-3fb6-4656-a7f1-3cb5d22b1624" />
----
- 
-## Quick-Start ICP Templates
- 
-Eight pre-filled campaign briefs are available in the UI. Selecting one populates all four brief fields instantly.
- 
-| Template | Product | ICP |
-|----------|---------|-----|
-| `SaaS → RevOps` | RevOps unification platform | RevOps Managers at B2B SaaS, 50–300 employees |
-| `Agency → E-comm` | Performance marketing agency | DTC founders, $1M–$10M revenue, Shopify |
-| `Consulting → CFOs` | Fractional CFO services | Series A–B founders planning a fundraise |
-| `HR Tech → People Ops` | HR automation software | People Ops at fast-growing 50–200 person companies |
-| `Accounting → Freelancers` | Freelancer accounting software | Solo designers/devs, US-based, $50–150k income |
-| `Security → IT Directors` | Security awareness training | IT Directors at mid-market regulated industries |
-| `Logistics → Ops Mgrs` | Route optimization SaaS | Ops Managers, 10–100 delivery vehicles |
-| `LegalTech → Attorneys` | Legal practice management | Solo attorneys, family/estate/PI law | 
-
-</div>
----
- 
-## Overview
- 
 Signal is a modular AI platform that generates complete B2B cold outreach campaigns from a single campaign brief. Users select which of five modules to execute — the system orchestrates sequential LLM calls, threads context between them, and returns structured, copy-ready output for every touchpoint in a modern sales motion.
  
-No server. No database. No subscriptions. The API (Groq free tier) runs in the browser. Hosting (GitHub Pages) is free. Monthly operating cost: `$0.00`. 
+No server. No database. No subscriptions. The API (Groq free tier) runs in the browser. Hosting (GitHub Pages) is free. Monthly operating cost: $0.00. 
 **Theme: Industrial Brutalism**.Zero border-radius. CRT grid overlay. Terminal-style labels. High-contrast acid green on near-black.
- 
----
  
 ## The Five Modules
  
 | # | Module | What It Generates |
 |---|--------|-------------------|
-| `01` | **Email Sequence** | 3–5 emails with subject line, body, CTA, send-time recommendation, A/B subject variants, psychological rationale per email, and a 75-word CPPC-framework body |
-| `02` | **LinkedIn Network** | Connection request, two value-first DMs, cold voicemail script — all passing the Humanizer Rules (no AI filler, no "Rule of Three", peer-level tone) |
-| `03` | **Objection Bank** | Five common objections × tailored response + bridge question, plus the core objection-handling philosophy |
-| `04` | **Pre-Flight Simulator** | Per-email: open likelihood, reply probability, prospect inner monologue, PASS/FAIL rubric scores (specificity, social proof, cost-of-inaction), weakest line, fix. Overall: sequence survival rate `/100` |
-| `05` | **Reply Analyzer** | Classifies any incoming prospect reply, assigns a temperature score (Hot → Frozen), generates a ready-to-send response, and adds an SDR coaching note on the prospect's psychology |
+| 01 | **Email Sequence** | 3–5 emails with subject line, body, CTA, send-time recommendation, A/B subject variants, psychological rationale per email, and a 75-word CPPC-framework body |
+| 02 | **LinkedIn Network** | Connection request, two value-first DMs, cold voicemail script — all passing the Humanizer Rules (no AI filler, no "Rule of Three", peer-level tone) |
+| 03 | **Objection Bank** | Five common objections × tailored response + bridge question, plus the core objection-handling philosophy |
+| 04 | **Pre-Flight Simulator** | Per-email: open likelihood, reply probability, prospect inner monologue, PASS/FAIL rubric scores (specificity, social proof, cost-of-inaction), weakest line, fix. Overall: sequence survival rate /100 |
+| 05 | **Reply Analyzer** | Classifies any incoming prospect reply, assigns a temperature score (Hot → Frozen), generates a ready-to-send response, and adds an SDR coaching note on the prospect's psychology |
  
 > **Modules are togglable.** Select only what you need. The orchestrator recalculates the step count, adjusts the progress indicator, and hides irrelevant output tabs automatically.
 
@@ -93,7 +58,7 @@ The LinkedIn module applies six explicit behavioral constraints to prevent AI-pa
 | LLM | Groq API · Llama 3.3 70B Versatile | Free tier · ~15s full suite generation |
 | Frontend | Vanilla HTML / CSS / JS | No frameworks, no build step |
 | Hosting | GitHub Pages | Free, permanent, zero config |
-| State | Browser memory (`_store` object) | No database, no session storage |
+| State | Browser memory (_store object) | No database, no session storage |
 | Fonts | Space Grotesk · Space Mono · Newsreader | Google Fonts CDN |
 | API Cost | $0.00 / month | Groq free tier |
 | Hosting Cost | $0.00 / month | GitHub Pages |
@@ -101,8 +66,6 @@ The LinkedIn module applies six explicit behavioral constraints to prevent AI-pa
 ### Why Groq over Gemini or OpenAI
  
 Llama 3.3 70B on Groq delivers generation speeds of 1,000–2,000 tokens per second on their custom LPU hardware. A full 5-module suite (5 emails + LinkedIn + objections + simulator + reply) completes in approximately 15 seconds. Equivalent generation on Gemini 1.5 Flash took ~45 seconds. The free tier is genuinely unlimited for this use case (500,000 tokens/day).
- 
----
 
 ## Business Case
  
@@ -121,12 +84,32 @@ Signal reduces the equivalent quarterly output to under two hours at zero margin
  
 The Pre-Flight Simulator changes the ROI conversation: instead of discovering that a sequence underperforms after burning through a prospect list, teams validate it before sending email one.
 
+## Quick-Start ICP Templates
+Eight pre-filled campaign briefs are available in the UI. Selecting one populates all four brief fields instantly.
+ 
+| Template | Product | ICP |
+|----------|---------|-----|
+| SaaS → RevOps | RevOps unification platform | RevOps Managers at B2B SaaS, 50–300 employees |
+| Agency → E-comm | Performance marketing agency | DTC founders, $1M–$10M revenue, Shopify |
+| Consulting → CFOs | Fractional CFO services | Series A–B founders planning a fundraise |
+| HR Tech → People Ops | HR automation software | People Ops at fast-growing 50–200 person companies |
+| Accounting → Freelancers | Freelancer accounting software | Solo designers/devs, US-based, $50–150k income |
+| Security → IT Directors | Security awareness training | IT Directors at mid-market regulated industries |
+| Logistics → Ops Mgrs | Route optimization SaaS | Ops Managers, 10–100 delivery vehicles |
+| LegalTech → Attorneys | Legal practice management | Solo attorneys, family/estate/PI law | 
+
  
 ## Limitations & Known Behaviour
 - **Simulator requires emails:** The Pre-Flight Simulator reads from the email data store. Running it without first generating the email sequence returns an empty analysis. A validation guard prevents this when running the full suite; the standalone **EXECUTE // RUN PRE-FLIGHT SIMULATION** button on the Simulator tab will alert if no emails exist.
-- **Reply Analyzer mock on full-suite run:** When triggered as part of a full suite execution, the Reply Analyzer uses a default "we're already using another vendor" reply to demonstrate the module. For live prospect replies, use the standalone textarea in the `05_REPLY_ANALYZER` tab.
+- **Reply Analyzer mock on full-suite run:** When triggered as part of a full suite execution, the Reply Analyzer uses a default "we're already using another vendor" reply to demonstrate the module. For live prospect replies, use the standalone textarea in the 05_REPLY_ANALYZER tab.
 
 *Full-cycle B2B outreach automation. Execute, don't write.*
- 
-</div>
- 
+
+ ███████╗██╗ ██████╗ ███╗   ██╗ █████╗ ██╗     
+ ██╔════╝██║██╔════╝ ████╗  ██║██╔══██╗██║     
+ ███████╗██║██║  ███╗██╔██╗ ██║███████║██║     
+ ╚════██║██║██║   ██║██║╚██╗██║██╔══██║██║     
+ ███████║██║╚██████╔╝██║ ╚████║██║  ██║███████╗
+ ╚══════╝╚═╝ ╚═════╝ ╚═╝  ╚═══╝╚═╝  ╚═╝╚══════╝
+           
+<img width="1910" height="1258" alt="screencapture-prometheusforge-github-io-outreach-intelligence-platform-2026-06-12-03_28_26" src="https://github.com/user-attachments/assets/11e73950-3fb6-4656-a7f1-3cb5d22b1624" />
