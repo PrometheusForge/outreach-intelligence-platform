@@ -37,7 +37,9 @@ This platform reduces that to under 2 hours, saving $6,960/quarter.
  ╚══════╝╚═╝ ╚═════╝ ╚═╝  ╚═══╝╚═╝  ╚═╝╚══════╝
                   OUTREACH INTELLIGENCE // v2.0
 ```
- 
+```
+<img width="1910" height="1258" alt="screencapture-prometheusforge-github-io-outreach-intelligence-platform-2026-06-12-03_28_26" src="https://github.com/user-attachments/assets/11e73950-3fb6-4656-a7f1-3cb5d22b1624" />
+
 <div align="center">
 [![API](https://img.shields.io/badge/API-Groq%20Free%20Tier-orange?style=flat-square)](https://console.groq.com)
 [![Model](https://img.shields.io/badge/LLM-Llama%203.3%2070B-blue?style=flat-square)](https://console.groq.com/docs/models)
