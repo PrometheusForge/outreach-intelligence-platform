@@ -23,17 +23,13 @@ This is the technical core of the project. Six separate prompt types, each engin
 All six prompt types open with the same persona injection. A named character with explicit writing philosophy, specific forbidden phrases, and a formatting directive. The persona establishes quality standards that cascade consistently across every API call regardless of which module is running.
  
 ## Dynamic Tone Constraints
- 
 Tone is not passed as a label. It is converted to a behavioral instruction set before being injected into the prompt:
   
 ## Context Threading (Email Sequence)
- 
 Each email prompt includes a one-sentence summary of what the previous email communicated and what it asked for. This summary is extracted from the a field of each parsed response and injected into the next prompt's block.
  
 ## Few-Shot Anchor Examples (Generator ↔ Simulator Feedback Loop)
- 
 The email generator and the Pre-Flight Simulator are architected as a deliberate feedback loop. The generator's prompt includes PASSING and FAILING examples calibrated specifically to the simulator's PASS/FAIL rubric criteria:
- 
 
 FEW-SHOT ANCHOR EXAMPLES (MANDATORY FOR SCORING):
  
@@ -53,22 +49,17 @@ The LinkedIn module applies six explicit behavioral constraints to prevent AI-pa
  
 ## Technology Stack
  
-| Layer | Technology | Notes |
-|-------|-----------|-------|
-| LLM | Groq API · Llama 3.3 70B Versatile | Free tier · ~15s full suite generation |
-| Frontend | Vanilla HTML / CSS / JS | No frameworks, no build step |
-| Hosting | GitHub Pages | Free, permanent, zero config |
-| State | Browser memory (_store object) | No database, no session storage |
-| Fonts | Space Grotesk · Space Mono · Newsreader | Google Fonts CDN |
-| API Cost | $0.00 / month | Groq free tier |
-| Hosting Cost | $0.00 / month | GitHub Pages |
- 
-### Why Groq over Gemini or OpenAI
- 
-Llama 3.3 70B on Groq delivers generation speeds of 1,000–2,000 tokens per second on their custom LPU hardware. A full 5-module suite (5 emails + LinkedIn + objections + simulator + reply) completes in approximately 15 seconds. Equivalent generation on Gemini 1.5 Flash took ~45 seconds. The free tier is genuinely unlimited for this use case (500,000 tokens/day).
+| Layer | Technology |
+|-------|-----------|
+| LLM | Groq API · Llama 3.3 70B Versatile ||
+| Frontend | Vanilla HTML / CSS / JS |
+| Hosting | GitHub Pages |
+| State | Browser memory |
+| Fonts | Space Grotesk · Space Mono · Newsreader |
+| API Cost | $0.00 / month |
+| Hosting Cost | $0.00 / month |
 
 ## Business Case
- 
 A B2B SaaS company with 3 SDRs writing sequences for 5 verticals spends approximately 120 hours per quarter on outreach copywriting at a loaded cost of ~$60/hour. That is **$7,200 per quarter** — and the sequences need refreshing every 90 days.
  
 Signal reduces the equivalent quarterly output to under two hours at zero marginal cost.
@@ -97,7 +88,6 @@ Eight pre-filled campaign briefs are available in the UI. Selecting one populate
 | Security → IT Directors | Security awareness training | IT Directors at mid-market regulated industries |
 | Logistics → Ops Mgrs | Route optimization SaaS | Ops Managers, 10–100 delivery vehicles |
 | LegalTech → Attorneys | Legal practice management | Solo attorneys, family/estate/PI law | 
-
  
 ## Limitations & Known Behaviour
 - **Simulator requires emails:** The Pre-Flight Simulator reads from the email data store. Running it without first generating the email sequence returns an empty analysis. A validation guard prevents this when running the full suite; the standalone **EXECUTE // RUN PRE-FLIGHT SIMULATION** button on the Simulator tab will alert if no emails exist.
