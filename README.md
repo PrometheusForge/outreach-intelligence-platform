@@ -1,3 +1,4 @@
+<img width="1910" height="1258" alt="screencapture-prometheusforge-github-io-outreach-intelligence-platform-2026-06-12-03_28_26" src="https://github.com/user-attachments/assets/11e73950-3fb6-4656-a7f1-3cb5d22b1624" />
 Signal is a modular AI platform that generates complete B2B cold outreach campaigns from a single campaign brief. Users select which of five modules to execute — the system orchestrates sequential LLM calls, threads context between them, and returns structured, copy-ready output for every touchpoint in a modern sales motion.
  
 No server. No database. No subscriptions. The API (Groq free tier) runs in the browser. Hosting (GitHub Pages) is free. Monthly operating cost: $0.00. 
@@ -94,12 +95,3 @@ Eight pre-filled campaign briefs are available in the UI. Selecting one populate
 - **Reply Analyzer mock on full-suite run:** When triggered as part of a full suite execution, the Reply Analyzer uses a default "we're already using another vendor" reply to demonstrate the module. For live prospect replies, use the standalone textarea in the 05_REPLY_ANALYZER tab.
 
 *Full-cycle B2B outreach automation. Execute, don't write.*
-
- ███████╗██╗ ██████╗ ███╗   ██╗ █████╗ ██╗     
- ██╔════╝██║██╔════╝ ████╗  ██║██╔══██╗██║     
- ███████╗██║██║  ███╗██╔██╗ ██║███████║██║     
- ╚════██║██║██║   ██║██║╚██╗██║██╔══██║██║     
- ███████║██║╚██████╔╝██║ ╚████║██║  ██║███████╗
- ╚══════╝╚═╝ ╚═════╝ ╚═╝  ╚═══╝╚═╝  ╚═╝╚══════╝
-           
-<img width="1910" height="1258" alt="screencapture-prometheusforge-github-io-outreach-intelligence-platform-2026-06-12-03_28_26" src="https://github.com/user-attachments/assets/11e73950-3fb6-4656-a7f1-3cb5d22b1624" />
