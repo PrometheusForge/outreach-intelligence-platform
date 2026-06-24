@@ -88,7 +88,9 @@ async function generateAll() {
   let previousSummary = null;
 
   try {
-    const { data: campaignData, error: campErr } = await supabaseClient.from('campaign_briefs')
+    // LOG CAMPAIGN BRIEF TO SUPABASE 
+    const { data: campaignData, error: campErr } = await supabaseClient
+      .from('campaign_briefs')
       .insert([{ product: config.product, icp: config.icp, goal: config.goal }])
       .select()
       .single();
