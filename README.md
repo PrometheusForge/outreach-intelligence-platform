@@ -1,4 +1,7 @@
 <img width="1910" height="1258" alt="screencapture-prometheusforge-github-io-outreach-intelligence-platform-2026-06-12-03_28_26" src="https://github.com/user-attachments/assets/11e73950-3fb6-4656-a7f1-3cb5d22b1624" />
+
+##Live Link: https://outreach-intelligence-platform.vercel.app/
+
 Signal is a modular AI platform that generates complete B2B cold outreach campaigns from a single campaign brief. Users select which of five modules to execute — the system orchestrates sequential LLM calls, threads context between them, and returns structured, copy-ready output for every touchpoint in a modern sales motion.
  
 No server. No database. No subscriptions. The API (Groq free tier) runs in the browser. Hosting (GitHub Pages) is free. Monthly operating cost: $0.00. 
