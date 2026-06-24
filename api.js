@@ -1,6 +1,7 @@
 const SUPABASE_URL = 'https://bfgqgbhxulibxfqaayar.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJmZ3FnYmh4dWxpYnhmcWFheWFyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA1NzQxNjQsImV4cCI6MjA5NjE1MDE2NH0.8a3S4qQNzSB494mGNB7kZ3h36LsxlYi7ang-DCOnSWw';
-const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
 let currentCampaignId = null;
 const GROQ_MODEL    = 'llama-3.3-70b-versatile';
 const GROQ_ENDPOINT = 'https://api.groq.com/openai/v1/chat/completions';
@@ -87,8 +88,7 @@ async function generateAll() {
   let previousSummary = null;
 
   try {
-    const { data: campaignData, error: campErr } = await supabase
-      .from('campaign_briefs')
+    const { data: campaignData, error: campErr } = await supabaseClient.from('campaign_briefs')
       .insert([{ product: config.product, icp: config.icp, goal: config.goal }])
       .select()
       .single();
