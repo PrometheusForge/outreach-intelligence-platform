@@ -1,3 +1,8 @@
+const SUPABASE_URL = 'https://bfgqgbhxulibxfqaayar.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJmZ3FnYmh4dWxpYnhmcWFheWFyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA1NzQxNjQsImV4cCI6MjA5NjE1MDE2NH0.8a3S4qQNzSB494mGNB7kZ3h36LsxlYi7ang-DCOnSWw';
+const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+let currentCampaignId = null;
 const GROQ_MODEL    = 'llama-3.3-70b-versatile';
 const GROQ_ENDPOINT = 'https://api.groq.com/openai/v1/chat/completions';
 
@@ -83,6 +88,19 @@ async function generateAll() {
   let previousSummary = null;
 
   try {
+    // LOG CAMPAIGN BRIEF TO SUPABASE 
+    const { data: campaignData, error: campErr } = await supabaseClient
+      .from('campaign_briefs')
+      .insert([{ product: config.product, icp: config.icp, goal: config.goal }])
+      .select()
+      .single();
+
+    if (!campErr && campaignData) {
+      currentCampaignId = campaignData.id;
+    } else {
+      console.error("Supabase Campaign Insert Error:", campErr);
+    }
+
     // A-GENERATE EMAILS 
     if (runEmails) {
       for (const step of steps) {
@@ -93,6 +111,19 @@ async function generateAll() {
         renderEmailCard(parsed, step);
         previousSummary = parsed.internalSummary || `Email ${step.num} covered the "${step.angle}" angle.`;
         
+        if (currentCampaignId) {
+          await supabaseClient.from('email_sequences').insert([{
+            campaign_id: currentCampaignId,
+            step_number: step.num,
+            angle: step.angle,
+            subject_line: parsed.subject,
+            body: parsed.body,
+            cta: parsed.cta,
+            ab_variants: { a: parsed.variantA, b: parsed.variantB, c: parsed.variantC },
+            why_it_works: parsed.whyItWorks
+          }]);
+        }
+
         done++;
         if (done < totalSteps) await sleep(2000);
       }
@@ -102,8 +133,19 @@ async function generateAll() {
     if (runLinkedIn) {
       updateProgress('Building LinkedIn network strategy…', (done / totalSteps) * 100);
       const liRaw = await callGroq(buildLinkedInPrompt(config), apiKey);
-      renderLinkedInOutput(parseLinkedInOutput(liRaw));
+      const parsedLi = parseLinkedInOutput(liRaw);
+      renderLinkedInOutput(parsedLi);
       
+      if (currentCampaignId) {
+        await supabaseClient.from('linkedin_assets').insert([{
+          campaign_id: currentCampaignId,
+          connection_request: parsedLi.connectionRequest,
+          dm_one: parsedLi.dm1,
+          dm_two: parsedLi.dm2,
+          voicemail_script: parsedLi.voicemail
+        }]);
+      }
+
       done++;
       if (done < totalSteps) await sleep(2000);
     }
@@ -112,7 +154,17 @@ async function generateAll() {
     if (runObjections) {
       updateProgress('Generating threat objection bank…', (done / totalSteps) * 100);
       const objRaw = await callGroq(buildObjectionBankPrompt(config), apiKey);
-      renderObjectionOutput(parseObjectionOutput(objRaw));
+      const parsedObj = parseObjectionOutput(objRaw);
+      renderObjectionOutput(parsedObj);
+
+      if (currentCampaignId) {
+        await supabaseClient.from('objection_bank').insert([{
+          campaign_id: currentCampaignId,
+          objections_data: parsedObj.objections,
+          philosophy: parsedObj.philosophy
+        }]);
+      }
+
       done++;
       if (done < totalSteps) await sleep(2000);
     }
@@ -122,7 +174,7 @@ async function generateAll() {
       updateProgress('Running prospect stress-test simulation…', (done / totalSteps) * 100);
       const emails = Object.values(_store).filter(Boolean);
       const simPrompt = buildPerformanceSimulatorPrompt(emails, config);
-      const simRaw = await callGroq(simPrompt, apiKey, 0.1, true);
+      const simRaw = await callGroq(simPrompt, apiKey, 0, true);
       
       let cleanSim = simRaw.replace(/```json/gi, '').replace(/```/g, '').trim();
       const simMatch = cleanSim.match(/\{[\s\S]*\}/);
@@ -130,6 +182,15 @@ async function generateAll() {
       
       const simJson = JSON.parse(simMatch[0]);
       renderSimulatorOutput(simJson);
+
+      if (currentCampaignId) {
+        await supabaseClient.from('simulations').insert([{
+          campaign_id: currentCampaignId,
+          overall_score: simJson.overall_score || simJson.OVERALL_SCORE,
+          simulation_data: simJson
+        }]);
+      }
+
       done++;
       if (done < totalSteps) await sleep(2000);
     }
