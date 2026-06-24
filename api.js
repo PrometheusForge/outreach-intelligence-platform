@@ -174,7 +174,7 @@ async function generateAll() {
       updateProgress('Running prospect stress-test simulation…', (done / totalSteps) * 100);
       const emails = Object.values(_store).filter(Boolean);
       const simPrompt = buildPerformanceSimulatorPrompt(emails, config);
-      const simRaw = await callGroq(simPrompt, apiKey, 0.1, true);
+      const simRaw = await callGroq(simPrompt, apiKey, 0, true);
       
       let cleanSim = simRaw.replace(/```json/gi, '').replace(/```/g, '').trim();
       const simMatch = cleanSim.match(/\{[\s\S]*\}/);
