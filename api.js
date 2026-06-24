@@ -112,7 +112,7 @@ async function generateAll() {
         previousSummary = parsed.internalSummary || `Email ${step.num} covered the "${step.angle}" angle.`;
         
         if (currentCampaignId) {
-          await supabase.from('email_sequences').insert([{
+          await supabaseClient.from('email_sequences').insert([{
             campaign_id: currentCampaignId,
             step_number: step.num,
             angle: step.angle,
@@ -137,7 +137,7 @@ async function generateAll() {
       renderLinkedInOutput(parsedLi);
       
       if (currentCampaignId) {
-        await supabase.from('linkedin_assets').insert([{
+        await supabaseClient.from('linkedin_assets').insert([{
           campaign_id: currentCampaignId,
           connection_request: parsedLi.connectionRequest,
           dm_one: parsedLi.dm1,
@@ -158,7 +158,7 @@ async function generateAll() {
       renderObjectionOutput(parsedObj);
 
       if (currentCampaignId) {
-        await supabase.from('objection_bank').insert([{
+        await supabaseClient.from('objection_bank').insert([{
           campaign_id: currentCampaignId,
           objections_data: parsedObj.objections,
           philosophy: parsedObj.philosophy
@@ -184,7 +184,7 @@ async function generateAll() {
       renderSimulatorOutput(simJson);
 
       if (currentCampaignId) {
-        await supabase.from('simulations').insert([{
+        await supabaseClient.from('simulations').insert([{
           campaign_id: currentCampaignId,
           overall_score: simJson.overall_score || simJson.OVERALL_SCORE,
           simulation_data: simJson
