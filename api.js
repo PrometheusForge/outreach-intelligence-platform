@@ -6,7 +6,7 @@ let currentCampaignId = null;
 const GROQ_MODEL    = 'llama-3.3-70b-versatile';
 const GROQ_ENDPOINT = 'https://api.groq.com/openai/v1/chat/completions';
 
-async function callGroq(prompt, apiKey, temp = 0.85, isJsonMode = false) {
+async function callGroq(prompt, apiKey, temp = 0.85, isJsonMode = false, jsonSchema = null, tools = null) {
   const bodyPayload = {
     model: GROQ_MODEL,
     messages: [{ role: 'user', content: prompt }],
@@ -15,8 +15,23 @@ async function callGroq(prompt, apiKey, temp = 0.85, isJsonMode = false) {
     max_completion_tokens: 1300
   };
   
-  if (isJsonMode) {
+  // Enforce Groq Strict Mode if a schema is provided
+  if (jsonSchema) {
+    bodyPayload.response_format = {
+      type: "json_schema",
+      json_schema: {
+        name: "strict_output_schema",
+        strict: true,
+        schema: jsonSchema
+      }
+    };
+  } else if (isJsonMode) {
     bodyPayload.response_format = { type: "json_object" };
+  }
+
+  // Inject external tool architecture
+  if (tools) {
+    bodyPayload.tools = tools;
   }
 
   const res = await fetch(GROQ_ENDPOINT, {
@@ -34,6 +49,12 @@ async function callGroq(prompt, apiKey, temp = 0.85, isJsonMode = false) {
   }
 
   const data = await res.json();
+  
+  // Intercept autonomous tool calls
+  if (data?.choices?.[0]?.message?.tool_calls) {
+    return { isToolCall: true, tools: data.choices[0].message.tool_calls };
+  }
+
   const text = data?.choices?.[0]?.message?.content;
   if (!text) throw new Error('Empty response from Groq.');
   return text;
@@ -289,13 +310,38 @@ async function analyzeReply() {
   const btn = document.getElementById('analyzeReplyBtn');
   const originalText = btn.textContent;
   btn.disabled = true;
-  btn.textContent = '[ PROCESSING... ]';
+  btn.textContent = '[ PROCESSING & ORCHESTRATING... ]';
 
   try {
     const prompt = buildReplyAnalyzerPrompt(incomingReply, config);
-    const raw = await callGroq(prompt, apiKey, 0.1, true);
     
-    // Clean if LLM wraps the JSON
+    // Define the autonomous execution toolbox for pipeline management
+    const crmToolbox = [{
+      type: "function",
+      function: {
+        name: "update_crm_pipeline_status",
+        description: "Updates the prospect's pipeline stage in the CRM based on their reply sentiment.",
+        parameters: {
+          type: "object",
+          properties: {
+            confidence_score: { type: "number", description: "1 to 10 scale of prospect interest" },
+            new_pipeline_stage: { type: "string", enum: ["Interested", "Soft Objection", "Not Interested", "Meeting Booked"] }
+          },
+          required: ["confidence_score", "new_pipeline_stage"]
+        }
+      }
+    }];
+
+    // Execute with tools injected
+    const raw = await callGroq(prompt, apiKey, 0.1, true, null, crmToolbox);
+    
+    // Intercept Tool Calls before rendering text
+    if (raw.isToolCall) {
+      console.log("LLM Initiated Tool Call:", raw.tools);
+      alert(`Autonomous Action Proposed: The system wants to execute [${raw.tools[0].function.name}]. Check your developer console for the exact JSON payload payload to send to your webhook.`);
+      return; 
+    }
+    
     const cleanJson = raw.replace(/```json/gi, '').replace(/```/g, '').trim();
     const parsedData = JSON.parse(cleanJson);
     
@@ -310,7 +356,7 @@ async function analyzeReply() {
   }
 }
 
-// PRE-FLIGHT SIMULATOR
+// PRE-FLIGHT SIMULATOR (Ensemble + Deterministic Math)
 async function runSimulator() {
   const apiKey = document.getElementById('apiKeyInput').value.trim();
   if (!apiKey) { alert('Paste your Groq API key in the header first.'); return; }
@@ -327,16 +373,37 @@ async function runSimulator() {
   const btn = document.getElementById('runSimBtn');
   const originalText = btn.textContent;
   btn.disabled = true;
-  btn.textContent = '';
+  btn.textContent = '[ RUNNING ENSEMBLE EVALUATION... ]';
 
   try {
     const prompt = buildPerformanceSimulatorPrompt(emails, config);
-    // Explicitly pass 0.1 and true to force determinism
-    const raw = await callGroq(prompt, apiKey, 0.1, true);
-    const parsedData = JSON.parse(raw);
     
+    const calls = [
+      callGroq(prompt, apiKey, 0.2, true),
+      callGroq(prompt, apiKey, 0.2, true),
+      callGroq(prompt, apiKey, 0.2, true)
+    ];
+    
+    const results = await Promise.all(calls);
+    const parsedResults = results.map(raw => JSON.parse(raw.replace(/```json/gi, '').replace(/```/g, '').trim()));
+    
+    let finalData = parsedResults[0];
+    if (finalData.email_simulations && finalData.email_simulations.length > 0) {
+      const firstEval = finalData.email_simulations[0].rubric_evaluation;
+      const checks = [
+        firstEval.specificity_final_check,
+        firstEval.social_proof_final_check,
+        firstEval.cost_of_inaction_final_check
+      ];
+      
+      const passCount = checks.filter(status => status === "PASS").length;
+      const scoringMatrix = { 3: 95, 2: 70, 1: 40, 0: 10 };
+      
+      finalData.overall_score = scoringMatrix[passCount] || 10;
+    }
+
     if (typeof renderSimulatorOutput === 'function') {
-      renderSimulatorOutput(parsedData);
+      renderSimulatorOutput(finalData);
     }
   } catch (err) {
     alert(`⚠ Simulation failed: ${err.message}`);
