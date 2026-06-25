@@ -270,9 +270,12 @@ function buildPerformanceSimulatorPrompt(emails, config) {
         "reply_probability": "High | Medium | Low",
         "prospect_monologue": "2-3 sentences in the first-person of the prospect reacting live.",
         "rubric_evaluation": {
-          "specificity_check": "PASS/FAIL: Does the text contain concrete metrics (e.g., '30%') instead of vague adjectives?",
-          "social_proof_check": "PASS/FAIL: Does the text name a specific verifiable entity (e.g., 'Johnson Law')?",
-          "cost_of_inaction_check": "PASS/FAIL: Is there a quantified loss (e.g., '$10,000')?"
+          "specificity_extraction_reasoning": "Identify and extract the exact quantitative metric from the text. If none exists, explicitly state 'No metric found'.",
+          "specificity_final_check": "Based exclusively on the extraction reasoning above, output strictly PASS or FAIL.",
+          "social_proof_extraction_reasoning": "Identify and extract the exact social proof element (e.g., case study, namedrop, specific result). If none exists, explicitly state 'No social proof found'.",
+          "social_proof_final_check": "Based exclusively on the extraction reasoning above, output strictly PASS or FAIL.",
+          "cost_of_inaction_extraction_reasoning": "Identify the explicit negative consequence or pain point highlighted if they do not act. If none exists, explicitly state 'No cost of inaction found'.",
+          "cost_of_inaction_final_check": "Based exclusively on the extraction reasoning above, output strictly PASS or FAIL."
         },
         "weakest_element": "Identify the specific line that hurts the email most.",
         "fix_suggestion": "Provide a concrete rewrite."
