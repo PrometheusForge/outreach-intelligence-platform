@@ -154,7 +154,7 @@ async function generateAll() {
       for (const step of steps) {
         updateProgress(`Writing Email ${step.num} of ${seqLen}: "${step.angle}"…`, (done / totalSteps) * 100);
         const prompt = buildEmailPrompt(config, step, previousSummary);
-        const raw = await callGroq(prompt, apiKey);
+        const raw = await callGroq(prompt, apiKey, 0.85, true, SCHEMA_EMAIL);
         const parsed = parseEmailOutput(raw, step);
         renderEmailCard(parsed, step);
         previousSummary = parsed.internalSummary || `Email ${step.num} covered the "${step.angle}" angle.`;
@@ -180,7 +180,7 @@ async function generateAll() {
     // B-GENERATE LINKEDIN
     if (runLinkedIn) {
       updateProgress('Building LinkedIn network strategy…', (done / totalSteps) * 100);
-      const liRaw = await callGroq(buildLinkedInPrompt(config), apiKey);
+      const liRaw = await callGroq(buildLinkedInPrompt(config), apiKey, 0.85, true, SCHEMA_LINKEDIN);
       const parsedLi = parseLinkedInOutput(liRaw);
       renderLinkedInOutput(parsedLi);
       
@@ -201,7 +201,7 @@ async function generateAll() {
     // C-GENERATE OBJECTIONS 
     if (runObjections) {
       updateProgress('Generating threat objection bank…', (done / totalSteps) * 100);
-      const objRaw = await callGroq(buildObjectionBankPrompt(config), apiKey);
+      const objRaw = await callGroq(buildObjectionBankPrompt(config), apiKey, 0.85, true, SCHEMA_OBJECTIONS);
       const parsedObj = parseObjectionOutput(objRaw);
       renderObjectionOutput(parsedObj);
 
@@ -282,7 +282,7 @@ async function regenerateEmail(emailNum, config) {
   showEmailLoading(emailNum);
 
   try {
-    const raw    = await callGroq(buildEmailPrompt(config, step, null), apiKey);
+    const raw = await callGroq(buildEmailPrompt(config, step, null), apiKey, 0.85, true, SCHEMA_EMAIL);
     const parsed = parseEmailOutput(raw, step);
     renderEmailCard(parsed, step);
   } catch (err) {
