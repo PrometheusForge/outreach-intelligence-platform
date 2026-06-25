@@ -1,46 +1,33 @@
-function extractField(text, label, nextLabels = []) {
-  const pattern = new RegExp('^\\s*(?:\\*\\*|###\\s*)?' + label.replace(/[_]/g, '[_]') + '(?:\\*\\*)?:\\s*', 'im');
-  const matchIdx  = text.search(pattern);
-  if (matchIdx === -1) return '';
-
-  const colonPos  = text.indexOf(':', matchIdx) + 1;
-  let endPos      = text.length;
-
-  for (const next of nextLabels) {
-    const nextPattern = new RegExp(`\\n${next.replace(/[_]/g, '[_]')}:`, 'im');
-    const nextIdx     = text.search(nextPattern);
-    if (nextIdx > colonPos && nextIdx < endPos) endPos = nextIdx;
-  }
-  return text.substring(colonPos, endPos).trim();
-}
+// parser.js (Fully refactored for Strict Mode Native JSON Parsing)
 
 function parseEmailOutput(raw, step) {
-  const allFields = [
-    'SUBJECT','PREVIEW_TEXT','BODY','CTA','SEND_DAY',
-    'BEST_SEND_TIME','WHY_IT_WORKS','INTERNAL_SUMMARY',
-    'VARIANT_SUBJECT_A','VARIANT_SUBJECT_B','VARIANT_SUBJECT_C'
-  ];
-  const get = f => extractField(raw, f, allFields.filter(x => x !== f));
+  try {
+    // With Strict Mode, 'raw' will be a pure stringified JSON object
+    const data = typeof raw === 'string' ? JSON.parse(raw) : raw;
 
-  return {
-    step,
-    subject:         get('SUBJECT'),
-    previewText:     get('PREVIEW_TEXT'),
-    body:            get('BODY'),
-    cta:             get('CTA'),
-    bestSendTime:    get('BEST_SEND_TIME'),
-    whyItWorks:      get('WHY_IT_WORKS'),
-    internalSummary: get('INTERNAL_SUMMARY'),
-    variantA:        get('VARIANT_SUBJECT_A'),
-    variantB:        get('VARIANT_SUBJECT_B'),
-    variantC:        get('VARIANT_SUBJECT_C'),
-  };
+    // Direct object mapping replaces regex extraction
+    return {
+      step,
+      subject:         data.SUBJECT || data.subject || '',
+      previewText:     data.PREVIEW_TEXT || data.preview_text || '',
+      body:            data.BODY || data.body || '',
+      cta:             data.CTA || data.cta || '',
+      bestSendTime:    data.BEST_SEND_TIME || data.best_send_time || '',
+      whyItWorks:      data.WHY_IT_WORKS || data.why_it_works || '',
+      internalSummary: data.INTERNAL_SUMMARY || data.internal_summary || '',
+      variantA:        data.VARIANT_SUBJECT_A || data.variant_a || '',
+      variantB:        data.VARIANT_SUBJECT_B || data.variant_b || '',
+      variantC:        data.VARIANT_SUBJECT_C || data.variant_c || '',
+    };
+  } catch (err) {
+    console.error("Email API strict parsing error:", err);
+    return { step, subject: "[ ERROR: Strict JSON Format Failed ]" };
+  }
 }
 
 function parseLinkedInOutput(raw) {
   try {
-    const cleanJson = raw.replace(/```json/gi, '').replace(/```/g, '').trim();
-    const data = JSON.parse(cleanJson);
+    const data = typeof raw === 'string' ? JSON.parse(raw) : raw;
     
     return {
       connectionRequest: data.connection_request || '',
@@ -50,22 +37,33 @@ function parseLinkedInOutput(raw) {
       whyItWorks:        data.why_it_works || ''
     };
   } catch (err) {
-    console.error("Failed to parse LinkedIn output:", err);
+    console.error("LinkedIn strict parsing error:", err);
     return {
-      connectionRequest: "[ ERROR: Failed to parse JSON response ]",
+      connectionRequest: "[ ERROR: Strict JSON Format Failed ]",
       dm1: "", dm2: "", voicemail: "", whyItWorks: ""
     };
   }
 }
 
 function parseObjectionOutput(raw) {
-  const objections = [];
-  for (let i = 1; i <= 5; i++) {
-    objections.push({
-      label:    extractField(raw, `OBJECTION_${i}`,       [`RESPONSE_${i}`]),
-      response: extractField(raw, `RESPONSE_${i}`,        [`BRIDGE_QUESTION_${i}`]),
-      bridge:   extractField(raw, `BRIDGE_QUESTION_${i}`, [`OBJECTION_${i+1}`, 'OBJECTION_PHILOSOPHY']),
-    });
+  try {
+    const data = typeof raw === 'string' ? JSON.parse(raw) : raw;
+    const objections = [];
+    
+    for (let i = 1; i <= 5; i++) {
+      objections.push({
+        label:    data[`OBJECTION_${i}`] || data[`objection_${i}`] || '',
+        response: data[`RESPONSE_${i}`] || data[`response_${i}`] || '',
+        bridge:   data[`BRIDGE_QUESTION_${i}`] || data[`bridge_question_${i}`] || '',
+      });
+    }
+    
+    return { 
+      objections, 
+      philosophy: data.OBJECTION_PHILOSOPHY || data.objection_philosophy || '' 
+    };
+  } catch (err) {
+    console.error("Objection Bank strict parsing error:", err);
+    return { objections: [], philosophy: "[ ERROR: Strict JSON Format Failed ]" };
   }
-  return { objections, philosophy: extractField(raw, 'OBJECTION_PHILOSOPHY', []) };
 }

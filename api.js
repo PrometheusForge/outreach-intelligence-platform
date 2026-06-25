@@ -6,10 +6,53 @@ let currentCampaignId = null;
 const GROQ_MODEL    = 'llama-3.3-70b-versatile';
 const GROQ_ENDPOINT = 'https://api.groq.com/openai/v1/chat/completions';
 
-async function callGroq(prompt, apiKey, temp = 0.85, isJsonMode = false) {
+const SCHEMA_EMAIL = {
+  type: "object",
+  properties: {
+    SUBJECT: { type: "string" }, PREVIEW_TEXT: { type: "string" }, BODY: { type: "string" },
+    CTA: { type: "string" }, SEND_DAY: { type: "string" }, BEST_SEND_TIME: { type: "string" },
+    WHY_IT_WORKS: { type: "string" }, INTERNAL_SUMMARY: { type: "string" },
+    VARIANT_SUBJECT_A: { type: "string" }, VARIANT_SUBJECT_B: { type: "string" }, VARIANT_SUBJECT_C: { type: "string" }
+  },
+  required: ["SUBJECT", "PREVIEW_TEXT", "BODY", "CTA", "SEND_DAY", "BEST_SEND_TIME", "WHY_IT_WORKS", "INTERNAL_SUMMARY", "VARIANT_SUBJECT_A", "VARIANT_SUBJECT_B", "VARIANT_SUBJECT_C"],
+  additionalProperties: false
+};
+
+const SCHEMA_LINKEDIN = {
+  type: "object",
+  properties: {
+    connection_request: { type: "string" }, dm_1: { type: "string" }, dm_2: { type: "string" },
+    voicemail_script: { type: "string" }, why_it_works: { type: "string" }
+  },
+  required: ["connection_request", "dm_1", "dm_2", "voicemail_script", "why_it_works"],
+  additionalProperties: false
+};
+
+const SCHEMA_OBJECTIONS = {
+  type: "object",
+  properties: {
+    OBJECTION_1: { type: "string" }, RESPONSE_1: { type: "string" }, BRIDGE_QUESTION_1: { type: "string" },
+    OBJECTION_2: { type: "string" }, RESPONSE_2: { type: "string" }, BRIDGE_QUESTION_2: { type: "string" },
+    OBJECTION_3: { type: "string" }, RESPONSE_3: { type: "string" }, BRIDGE_QUESTION_3: { type: "string" },
+    OBJECTION_4: { type: "string" }, RESPONSE_4: { type: "string" }, BRIDGE_QUESTION_4: { type: "string" },
+    OBJECTION_5: { type: "string" }, RESPONSE_5: { type: "string" }, BRIDGE_QUESTION_5: { type: "string" },
+    OBJECTION_PHILOSOPHY: { type: "string" }
+  },
+  required: ["OBJECTION_1", "RESPONSE_1", "BRIDGE_QUESTION_1", "OBJECTION_2", "RESPONSE_2", "BRIDGE_QUESTION_2", "OBJECTION_3", "RESPONSE_3", "BRIDGE_QUESTION_3", "OBJECTION_4", "RESPONSE_4", "BRIDGE_QUESTION_4", "OBJECTION_5", "RESPONSE_5", "BRIDGE_QUESTION_5", "OBJECTION_PHILOSOPHY"],
+  additionalProperties: false
+};
+
+async function callGroq(prompt, apiKey, temp = 0.85, isJsonMode = false, jsonSchema = null, tools = null) {
+  let finalPrompt = prompt;
+  
+  if (jsonSchema) {
+    finalPrompt += `\n\nCRITICAL INSTRUCTION: You must return ONLY a valid JSON object. Do not include any text outside the JSON. Use this exact schema structure:\n${JSON.stringify(jsonSchema)}`;
+    isJsonMode = true; 
+  }
+
   const bodyPayload = {
     model: GROQ_MODEL,
-    messages: [{ role: 'user', content: prompt }],
+    messages: [{ role: 'user', content: finalPrompt }],
     temperature: temp,
     top_p: 0.90,
     max_completion_tokens: 1300
@@ -17,6 +60,10 @@ async function callGroq(prompt, apiKey, temp = 0.85, isJsonMode = false) {
   
   if (isJsonMode) {
     bodyPayload.response_format = { type: "json_object" };
+  }
+
+  if (tools) {
+    bodyPayload.tools = tools;
   }
 
   const res = await fetch(GROQ_ENDPOINT, {
@@ -34,12 +81,21 @@ async function callGroq(prompt, apiKey, temp = 0.85, isJsonMode = false) {
   }
 
   const data = await res.json();
-  const text = data?.choices?.[0]?.message?.content;
+  
+  if (data?.choices?.[0]?.message?.tool_calls) {
+    return { isToolCall: true, tools: data.choices[0].message.tool_calls };
+  }
+
+  let text = data?.choices?.[0]?.message?.content;
   if (!text) throw new Error('Empty response from Groq.');
+
+  if (isJsonMode) {
+    text = text.replace(/```json/gi, '').replace(/```/g, '').trim();
+  }
+
   return text;
 }
 
-// MAIN ORCHESTRATOR
 async function generateAll() {
   const apiKey = document.getElementById('apiKeyInput').value.trim();
   if (!apiKey) { alert('Paste your Groq API key in the header first.'); return; }
@@ -47,7 +103,6 @@ async function generateAll() {
   const config = getFormValues();
   if (!config) return;
 
-  // Read toggle states
   const runEmails = document.getElementById('modEmails').checked;
   const runLinkedIn = document.getElementById('modLinkedIn').checked;
   const runObjections = document.getElementById('modObjections').checked;
@@ -59,7 +114,6 @@ async function generateAll() {
     return;
   }
 
-  // Simulator failsafe: You can't simulate emails if you aren't generating them
   if (runSim && !runEmails) {
     alert('⚠ Pre-Flight Simulator requires the 01_EMAILS module to be checked.');
     return;
@@ -68,7 +122,6 @@ async function generateAll() {
   const seqLen = parseInt(config.length);
   const steps = typeof EMAIL_SEQUENCE_MAP !== 'undefined' ? EMAIL_SEQUENCE_MAP[seqLen] : [];
   
-  // Calculate dynamic loading steps
   let totalSteps = 0;
   if (runEmails) totalSteps += seqLen;
   if (runLinkedIn) totalSteps += 1;
@@ -79,7 +132,6 @@ async function generateAll() {
   setGenerating(true, totalSteps);
   clearOutputs();
   
-  // show selected tabs immediately
   if (typeof showOutputSection === 'function') {
     showOutputSection(runEmails, runLinkedIn, runObjections, runSim, runReply);
   }
@@ -88,7 +140,6 @@ async function generateAll() {
   let previousSummary = null;
 
   try {
-    // LOG CAMPAIGN BRIEF TO SUPABASE 
     const { data: campaignData, error: campErr } = await supabaseClient
       .from('campaign_briefs')
       .insert([{ product: config.product, icp: config.icp, goal: config.goal }])
@@ -106,7 +157,7 @@ async function generateAll() {
       for (const step of steps) {
         updateProgress(`Writing Email ${step.num} of ${seqLen}: "${step.angle}"…`, (done / totalSteps) * 100);
         const prompt = buildEmailPrompt(config, step, previousSummary);
-        const raw = await callGroq(prompt, apiKey);
+        const raw = await callGroq(prompt, apiKey, 0.85, true, SCHEMA_EMAIL);
         const parsed = parseEmailOutput(raw, step);
         renderEmailCard(parsed, step);
         previousSummary = parsed.internalSummary || `Email ${step.num} covered the "${step.angle}" angle.`;
@@ -132,7 +183,7 @@ async function generateAll() {
     // B-GENERATE LINKEDIN
     if (runLinkedIn) {
       updateProgress('Building LinkedIn network strategy…', (done / totalSteps) * 100);
-      const liRaw = await callGroq(buildLinkedInPrompt(config), apiKey);
+      const liRaw = await callGroq(buildLinkedInPrompt(config), apiKey, 0.85, true, SCHEMA_LINKEDIN);
       const parsedLi = parseLinkedInOutput(liRaw);
       renderLinkedInOutput(parsedLi);
       
@@ -153,7 +204,7 @@ async function generateAll() {
     // C-GENERATE OBJECTIONS 
     if (runObjections) {
       updateProgress('Generating threat objection bank…', (done / totalSteps) * 100);
-      const objRaw = await callGroq(buildObjectionBankPrompt(config), apiKey);
+      const objRaw = await callGroq(buildObjectionBankPrompt(config), apiKey, 0.85, true, SCHEMA_OBJECTIONS);
       const parsedObj = parseObjectionOutput(objRaw);
       renderObjectionOutput(parsedObj);
 
@@ -218,7 +269,6 @@ async function generateAll() {
     updateProgress('✅ Full execution complete!', 100);
 
   } catch (err) {
-    // Alert user
     alert(`⚠ Execution Failed:\n\n${err.message}`);
     showError(`⚠ ${err.message}`);
   } finally {
@@ -235,7 +285,7 @@ async function regenerateEmail(emailNum, config) {
   showEmailLoading(emailNum);
 
   try {
-    const raw    = await callGroq(buildEmailPrompt(config, step, null), apiKey);
+    const raw = await callGroq(buildEmailPrompt(config, step, null), apiKey, 0.85, true, SCHEMA_EMAIL);
     const parsed = parseEmailOutput(raw, step);
     renderEmailCard(parsed, step);
   } catch (err) {
@@ -289,13 +339,33 @@ async function analyzeReply() {
   const btn = document.getElementById('analyzeReplyBtn');
   const originalText = btn.textContent;
   btn.disabled = true;
-  btn.textContent = '[ PROCESSING... ]';
+  btn.textContent = '[ PROCESSING & ORCHESTRATING... ]';
 
   try {
     const prompt = buildReplyAnalyzerPrompt(incomingReply, config);
-    const raw = await callGroq(prompt, apiKey, 0.1, true);
+    const crmToolbox = [{
+      type: "function",
+      function: {
+        name: "update_crm_pipeline_status",
+        description: "Updates the prospect's pipeline stage in the CRM based on their reply sentiment.",
+        parameters: {
+          type: "object",
+          properties: {
+            confidence_score: { type: "number", description: "1 to 10 scale of prospect interest" },
+            new_pipeline_stage: { type: "string", enum: ["Interested", "Soft Objection", "Not Interested", "Meeting Booked"] }
+          },
+          required: ["confidence_score", "new_pipeline_stage"]
+        }
+      }
+    }];
+
+    const raw = await callGroq(prompt, apiKey, 0.1, true, null, crmToolbox);
+    if (raw.isToolCall) {
+      console.log("LLM Initiated Tool Call:", raw.tools);
+      alert(`Autonomous Action Proposed: The system wants to execute [${raw.tools[0].function.name}]. Check your developer console for the exact JSON payload payload to send to your webhook.`);
+      return; 
+    }
     
-    // Clean if LLM wraps the JSON
     const cleanJson = raw.replace(/```json/gi, '').replace(/```/g, '').trim();
     const parsedData = JSON.parse(cleanJson);
     
@@ -327,16 +397,37 @@ async function runSimulator() {
   const btn = document.getElementById('runSimBtn');
   const originalText = btn.textContent;
   btn.disabled = true;
-  btn.textContent = '';
+  btn.textContent = '[ RUNNING ENSEMBLE EVALUATION... ]';
 
   try {
     const prompt = buildPerformanceSimulatorPrompt(emails, config);
-    // Explicitly pass 0.1 and true to force determinism
-    const raw = await callGroq(prompt, apiKey, 0.1, true);
-    const parsedData = JSON.parse(raw);
     
+    const calls = [
+      callGroq(prompt, apiKey, 0.2, true),
+      callGroq(prompt, apiKey, 0.2, true),
+      callGroq(prompt, apiKey, 0.2, true)
+    ];
+    
+    const results = await Promise.all(calls);
+    const parsedResults = results.map(raw => JSON.parse(raw.replace(/```json/gi, '').replace(/```/g, '').trim()));
+    
+    let finalData = parsedResults[0];
+    if (finalData.email_simulations && finalData.email_simulations.length > 0) {
+      const firstEval = finalData.email_simulations[0].rubric_evaluation;
+      const checks = [
+        firstEval.specificity_final_check,
+        firstEval.social_proof_final_check,
+        firstEval.cost_of_inaction_final_check
+      ];
+      
+      const passCount = checks.filter(status => status === "PASS").length;
+      const scoringMatrix = { 3: 95, 2: 70, 1: 40, 0: 10 };
+      
+      finalData.overall_score = scoringMatrix[passCount] || 10;
+    }
+
     if (typeof renderSimulatorOutput === 'function') {
-      renderSimulatorOutput(parsedData);
+      renderSimulatorOutput(finalData);
     }
   } catch (err) {
     alert(`⚠ Simulation failed: ${err.message}`);
