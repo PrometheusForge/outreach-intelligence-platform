@@ -43,24 +43,22 @@ const SCHEMA_OBJECTIONS = {
 };
 
 async function callGroq(prompt, apiKey, temp = 0.85, isJsonMode = false, jsonSchema = null, tools = null) {
+  let finalPrompt = prompt;
+  
+  if (jsonSchema) {
+    finalPrompt += `\n\nCRITICAL INSTRUCTION: You must return ONLY a valid JSON object. Do not include any text outside the JSON. Use this exact schema structure:\n${JSON.stringify(jsonSchema)}`;
+    isJsonMode = true; 
+  }
+
   const bodyPayload = {
     model: GROQ_MODEL,
-    messages: [{ role: 'user', content: prompt }],
+    messages: [{ role: 'user', content: finalPrompt }],
     temperature: temp,
     top_p: 0.90,
     max_completion_tokens: 1300
   };
   
-  if (jsonSchema) {
-    bodyPayload.response_format = {
-      type: "json_schema",
-      json_schema: {
-        name: "strict_output_schema",
-        strict: true,
-        schema: jsonSchema
-      }
-    };
-  } else if (isJsonMode) {
+  if (isJsonMode) {
     bodyPayload.response_format = { type: "json_object" };
   }
 
@@ -88,8 +86,13 @@ async function callGroq(prompt, apiKey, temp = 0.85, isJsonMode = false, jsonSch
     return { isToolCall: true, tools: data.choices[0].message.tool_calls };
   }
 
-  const text = data?.choices?.[0]?.message?.content;
+  let text = data?.choices?.[0]?.message?.content;
   if (!text) throw new Error('Empty response from Groq.');
+
+  if (isJsonMode) {
+    text = text.replace(/```json/gi, '').replace(/```/g, '').trim();
+  }
+
   return text;
 }
 
