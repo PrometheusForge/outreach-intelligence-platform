@@ -6,6 +6,42 @@ let currentCampaignId = null;
 const GROQ_MODEL    = 'llama-3.3-70b-versatile';
 const GROQ_ENDPOINT = 'https://api.groq.com/openai/v1/chat/completions';
 
+const SCHEMA_EMAIL = {
+  type: "object",
+  properties: {
+    SUBJECT: { type: "string" }, PREVIEW_TEXT: { type: "string" }, BODY: { type: "string" },
+    CTA: { type: "string" }, SEND_DAY: { type: "string" }, BEST_SEND_TIME: { type: "string" },
+    WHY_IT_WORKS: { type: "string" }, INTERNAL_SUMMARY: { type: "string" },
+    VARIANT_SUBJECT_A: { type: "string" }, VARIANT_SUBJECT_B: { type: "string" }, VARIANT_SUBJECT_C: { type: "string" }
+  },
+  required: ["SUBJECT", "PREVIEW_TEXT", "BODY", "CTA", "SEND_DAY", "BEST_SEND_TIME", "WHY_IT_WORKS", "INTERNAL_SUMMARY", "VARIANT_SUBJECT_A", "VARIANT_SUBJECT_B", "VARIANT_SUBJECT_C"],
+  additionalProperties: false
+};
+
+const SCHEMA_LINKEDIN = {
+  type: "object",
+  properties: {
+    connection_request: { type: "string" }, dm_1: { type: "string" }, dm_2: { type: "string" },
+    voicemail_script: { type: "string" }, why_it_works: { type: "string" }
+  },
+  required: ["connection_request", "dm_1", "dm_2", "voicemail_script", "why_it_works"],
+  additionalProperties: false
+};
+
+const SCHEMA_OBJECTIONS = {
+  type: "object",
+  properties: {
+    OBJECTION_1: { type: "string" }, RESPONSE_1: { type: "string" }, BRIDGE_QUESTION_1: { type: "string" },
+    OBJECTION_2: { type: "string" }, RESPONSE_2: { type: "string" }, BRIDGE_QUESTION_2: { type: "string" },
+    OBJECTION_3: { type: "string" }, RESPONSE_3: { type: "string" }, BRIDGE_QUESTION_3: { type: "string" },
+    OBJECTION_4: { type: "string" }, RESPONSE_4: { type: "string" }, BRIDGE_QUESTION_4: { type: "string" },
+    OBJECTION_5: { type: "string" }, RESPONSE_5: { type: "string" }, BRIDGE_QUESTION_5: { type: "string" },
+    OBJECTION_PHILOSOPHY: { type: "string" }
+  },
+  required: ["OBJECTION_1", "RESPONSE_1", "BRIDGE_QUESTION_1", "OBJECTION_2", "RESPONSE_2", "BRIDGE_QUESTION_2", "OBJECTION_3", "RESPONSE_3", "BRIDGE_QUESTION_3", "OBJECTION_4", "RESPONSE_4", "BRIDGE_QUESTION_4", "OBJECTION_5", "RESPONSE_5", "BRIDGE_QUESTION_5", "OBJECTION_PHILOSOPHY"],
+  additionalProperties: false
+};
+
 async function callGroq(prompt, apiKey, temp = 0.85, isJsonMode = false, jsonSchema = null, tools = null) {
   const bodyPayload = {
     model: GROQ_MODEL,
@@ -15,7 +51,6 @@ async function callGroq(prompt, apiKey, temp = 0.85, isJsonMode = false, jsonSch
     max_completion_tokens: 1300
   };
   
-  // Enforce Groq Strict Mode if a schema is provided
   if (jsonSchema) {
     bodyPayload.response_format = {
       type: "json_schema",
@@ -29,7 +64,6 @@ async function callGroq(prompt, apiKey, temp = 0.85, isJsonMode = false, jsonSch
     bodyPayload.response_format = { type: "json_object" };
   }
 
-  // Inject external tool architecture
   if (tools) {
     bodyPayload.tools = tools;
   }
@@ -50,7 +84,6 @@ async function callGroq(prompt, apiKey, temp = 0.85, isJsonMode = false, jsonSch
 
   const data = await res.json();
   
-  // Intercept autonomous tool calls
   if (data?.choices?.[0]?.message?.tool_calls) {
     return { isToolCall: true, tools: data.choices[0].message.tool_calls };
   }
@@ -60,7 +93,6 @@ async function callGroq(prompt, apiKey, temp = 0.85, isJsonMode = false, jsonSch
   return text;
 }
 
-// MAIN ORCHESTRATOR
 async function generateAll() {
   const apiKey = document.getElementById('apiKeyInput').value.trim();
   if (!apiKey) { alert('Paste your Groq API key in the header first.'); return; }
@@ -68,7 +100,6 @@ async function generateAll() {
   const config = getFormValues();
   if (!config) return;
 
-  // Read toggle states
   const runEmails = document.getElementById('modEmails').checked;
   const runLinkedIn = document.getElementById('modLinkedIn').checked;
   const runObjections = document.getElementById('modObjections').checked;
@@ -80,7 +111,6 @@ async function generateAll() {
     return;
   }
 
-  // Simulator failsafe: You can't simulate emails if you aren't generating them
   if (runSim && !runEmails) {
     alert('⚠ Pre-Flight Simulator requires the 01_EMAILS module to be checked.');
     return;
@@ -89,7 +119,6 @@ async function generateAll() {
   const seqLen = parseInt(config.length);
   const steps = typeof EMAIL_SEQUENCE_MAP !== 'undefined' ? EMAIL_SEQUENCE_MAP[seqLen] : [];
   
-  // Calculate dynamic loading steps
   let totalSteps = 0;
   if (runEmails) totalSteps += seqLen;
   if (runLinkedIn) totalSteps += 1;
@@ -100,7 +129,6 @@ async function generateAll() {
   setGenerating(true, totalSteps);
   clearOutputs();
   
-  // show selected tabs immediately
   if (typeof showOutputSection === 'function') {
     showOutputSection(runEmails, runLinkedIn, runObjections, runSim, runReply);
   }
@@ -109,7 +137,6 @@ async function generateAll() {
   let previousSummary = null;
 
   try {
-    // LOG CAMPAIGN BRIEF TO SUPABASE 
     const { data: campaignData, error: campErr } = await supabaseClient
       .from('campaign_briefs')
       .insert([{ product: config.product, icp: config.icp, goal: config.goal }])
@@ -239,7 +266,6 @@ async function generateAll() {
     updateProgress('✅ Full execution complete!', 100);
 
   } catch (err) {
-    // Alert user
     alert(`⚠ Execution Failed:\n\n${err.message}`);
     showError(`⚠ ${err.message}`);
   } finally {
@@ -314,8 +340,6 @@ async function analyzeReply() {
 
   try {
     const prompt = buildReplyAnalyzerPrompt(incomingReply, config);
-    
-    // Define the autonomous execution toolbox for pipeline management
     const crmToolbox = [{
       type: "function",
       function: {
@@ -332,10 +356,7 @@ async function analyzeReply() {
       }
     }];
 
-    // Execute with tools injected
     const raw = await callGroq(prompt, apiKey, 0.1, true, null, crmToolbox);
-    
-    // Intercept Tool Calls before rendering text
     if (raw.isToolCall) {
       console.log("LLM Initiated Tool Call:", raw.tools);
       alert(`Autonomous Action Proposed: The system wants to execute [${raw.tools[0].function.name}]. Check your developer console for the exact JSON payload payload to send to your webhook.`);
@@ -356,7 +377,7 @@ async function analyzeReply() {
   }
 }
 
-// PRE-FLIGHT SIMULATOR (Ensemble + Deterministic Math)
+// PRE-FLIGHT SIMULATOR
 async function runSimulator() {
   const apiKey = document.getElementById('apiKeyInput').value.trim();
   if (!apiKey) { alert('Paste your Groq API key in the header first.'); return; }
